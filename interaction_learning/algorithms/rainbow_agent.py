@@ -74,7 +74,7 @@ class DQNAgent:
             atom_size (int): the unit number of support
             n_step (int): step number to calculate n-step td error
         """
-        obs_dim = obs_space["symbolic_observation"].shape
+        obs_dim = obs_space.shape[0]
         action_dim = action_space.n
 
         self.action_space = action_space
@@ -82,9 +82,9 @@ class DQNAgent:
         self.batch_size = batch_size
         self.target_update = target_update
         self.gamma = gamma
-        self.epsilon = 0.3
+        self.epsilon = 0.4
         self.epsilon_decay = 0.000001
-        self.epsilon_min = 0.1
+        self.epsilon_min = 0.2
         # NoisyNet: All attributes related to epsilon are removed
 
         # device: cpu / gpu
@@ -208,8 +208,8 @@ class DQNAgent:
     def _compute_dqn_loss(self, samples: Dict[str, np.ndarray], gamma: float) -> torch.Tensor:
         """Return categorical dqn loss."""
         device = self.device  # for shortening the following lines
-        state = convert_numpy_obs_to_torch_dict(samples["obs"], device, batch=True)
-        next_state = convert_numpy_obs_to_torch_dict(samples["next_obs"], device, batch=True)
+        state = torch.Tensor(samples["obs"]).to(device)
+        next_state = torch.Tensor(samples["next_obs"]).to(device)
         action = torch.LongTensor(samples["acts"]).to(device)
         reward = torch.FloatTensor(samples["rews"].reshape(-1, 1)).to(device)
         done = torch.FloatTensor(samples["done"].reshape(-1, 1)).to(device)

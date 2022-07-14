@@ -16,8 +16,8 @@ class ReplayBuffer:
             n_step: int = 1,
             gamma: float = 0.99
     ):
-        self.obs_buf = np.zeros([size], dtype=obs_type)
-        self.next_obs_buf = np.zeros([size], dtype=obs_type)
+        self.obs_buf = np.zeros([size, obs_dim], dtype=np.float32)
+        self.next_obs_buf = np.zeros([size, obs_dim], dtype=np.float32)
         self.acts_buf = np.zeros([size], dtype=np.float32)
         self.rews_buf = np.zeros([size], dtype=np.float32)
         self.done_buf = np.zeros(size, dtype=np.float32)

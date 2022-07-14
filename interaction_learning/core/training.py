@@ -21,14 +21,11 @@ def select_action(dqn_agent, state: np.ndarray) -> np.ndarray:
         # print(f"random action {selected_action}")
     else:
         with torch.no_grad():
-            selected_action = dqn_agent.dqn(convert_numpy_obs_to_torch_dict(state, dqn_agent.device, batch=False)).argmax()
+            # selected_action = dqn_agent.dqn(convert_numpy_obs_to_torch_dict(state, dqn_agent.device, batch=False)).argmax()
+            selected_action = dqn_agent.dqn(torch.Tensor(state).to(dqn_agent.device)).argmax()
             selected_action = selected_action.detach().cpu().numpy()
 
         # print(f"network action {selected_action}")
-    #
-    # with torch.no_grad():
-    #     selected_action = dqn_agent.dqn(convert_numpy_obs_to_torch_dict(state, dqn_agent.device, batch=False)).argmax()
-    #     selected_action = selected_action.detach().cpu().numpy()
 
     if not dqn_agent.is_test:
         dqn_agent.transition = [state, selected_action]
@@ -61,11 +58,11 @@ def step(dqn_agent, env, action: np.ndarray) -> Tuple[np.ndarray, np.float64, bo
     return next_state, reward, done
 
 
-def train(dqn_agent, env, num_steps: int, plotting_interval: int = 200):
+def train(dqn_agent, env, num_steps: int, evalpy_config=None):
     """Train the agent."""
     dqn_agent.is_test = False
 
-    state = convert_dict_to_numpy(env.reset()["player_0"])
+    state = env.reset()["player_0"]
     update_cnt = 0
     losses = []
     scores = []

@@ -27,7 +27,7 @@ action_scheme = "scheme3"
 
 env_id = "CookingZoo-v0"
 env = cooking_zoo.parallel_env(level=level, num_agents=n_agents, record=record, max_steps=max_num_timesteps,
-                               recipes=recipes, action_scheme=action_scheme)
+                               recipes=recipes, action_scheme=action_scheme, obs_spaces=["feature_vector"])
 
 obs_space, action_space = env.observation_spaces["player_0"], env.action_spaces["player_0"]
 
@@ -51,10 +51,10 @@ batch_size = 256
 target_update = 1000
 
 # train
-with open(r"agent2_7x7_tomato_salad.pickle", "rb") as output_file:
+with open(r"agent3_7x7_tomato_salad.pickle", "rb") as output_file:
     agent = pickle.load(output_file)
 
 train(agent, env, num_frames, plotting_interval=50000)
 
-with open(r"agent2_7x7_tomato_salad.pickle", "wb") as output_file:
+with open(r"agent3_7x7_tomato_salad.pickle", "wb") as output_file:
     pickle.dump(agent, output_file)

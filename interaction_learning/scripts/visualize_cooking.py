@@ -20,24 +20,17 @@ action_scheme = "scheme3"
 
 env_id = "CookingZoo-v0"
 env = cooking_zoo.parallel_env(level=level, num_agents=n_agents, record=record, max_steps=max_num_timesteps,
-                               recipes=recipes, action_scheme=action_scheme)
+                               recipes=recipes, action_scheme=action_scheme, obs_spaces=["feature_vector"])
 
 
-with open(r"agent_7x7_tomato_salad.pickle", "rb") as output_file:
+with open(r"agent4_7x7_tomato_salad.pickle", "rb") as output_file:
     agent = pickle.load(output_file)
-
-
-def convert_state(state, device):
-    torch_state = {}
-    for k, v in state.items():
-        torch_state[k] = torch.FloatTensor(v).unsqueeze(dim=0).to(device)
-    return torch_state
 
 
 def select_action(dqn_agent, state: np.ndarray) -> np.ndarray:
     """Select an action from the input state."""
     with torch.no_grad():
-        selected_action = dqn_agent.dqn(convert_numpy_obs_to_torch_dict(state, dqn_agent.device, batch=False)).argmax()
+        selected_action = dqn_agent.dqn(torch.Tensor(state).to(dqn_agent.device)).argmax()
         selected_action = selected_action.detach().cpu().numpy()
     return selected_action
 
@@ -45,7 +38,7 @@ def select_action(dqn_agent, state: np.ndarray) -> np.ndarray:
 class CookingAgent:
 
     def get_action(self, observation) -> int:
-        return select_action(agent, convert_dict_to_numpy(observation)).item()
+        return select_action(agent, observation).item()
 
 
 cooking_agent = CookingAgent()

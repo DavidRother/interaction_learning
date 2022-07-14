@@ -7,6 +7,8 @@ obs_type = np.dtype([("symbolic_observation", np.int32, (7, 7, 16)), ("agent_pos
 
 
 def convert_dict_to_numpy(obs):
+    if isinstance(obs, np.ndarray):
+        return obs
     return np.array(tuple([v for v in obs.values()]), dtype=obs_type)
 
 

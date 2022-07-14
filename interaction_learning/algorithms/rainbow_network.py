@@ -23,8 +23,9 @@ class Network(nn.Module):
 
         # set common feature layer
         self.feature_layer = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(7 * 7 * 16, 128),
+            nn.Linear(67, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
             nn.ReLU(),
         )
 
@@ -45,9 +46,7 @@ class Network(nn.Module):
 
     def dist(self, x: torch.Tensor) -> torch.Tensor:
         """Get distribution for atoms."""
-        conv_input = x["symbolic_observation"]
-        conv_input = conv_input.permute(0, 3, 1, 2)
-        feature = self.feature_layer(conv_input)
+        feature = self.feature_layer(x)
         adv_hid = F.relu(self.advantage_hidden_layer(feature))
         val_hid = F.relu(self.value_hidden_layer(feature))
 
