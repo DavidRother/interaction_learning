@@ -47,13 +47,22 @@ seed_torch(seed)
 num_frames = 200000
 memory_size = 20000
 initial_mem_requirement = 5000
-batch_size = 1024
-target_update = 1000
+batch_size = 512
+target_update = 100
 
-# train
-agent = DQNAgent(obs_space, action_space, memory_size, batch_size, target_update, initial_mem_requirement, n_step=3)
+v_min = -10  # 0
+v_max = 30  # 200
 
-train(agent, env, num_frames)
 
-with open(r"agent5_7x7_tomato_salad.pickle", "wb") as output_file:
-    pickle.dump(agent, output_file)
+evalpy_config = {"project_path": "./", "project_folder": "test_logs/", "experiment_name": "cooking_tomato_example"}
+agent_dir = "agents/"
+
+for idx in range(30):
+    agent_save_string = f"agent{idx}_7x7_tomato_salad_test.pickle"
+    # train
+    agent = DQNAgent(obs_space, action_space, memory_size, batch_size, target_update, initial_mem_requirement,
+                     v_min=v_min, v_max=v_max, n_step=3)
+    train(agent, env, num_frames, agent_save_string, agent_dir, checkpoint_save=50000, evalpy_config=evalpy_config)
+
+    with open(f'{agent_dir}{agent_save_string}', "wb") as output_file:
+        pickle.dump(agent, output_file)

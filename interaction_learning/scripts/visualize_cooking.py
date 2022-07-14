@@ -23,7 +23,7 @@ env = cooking_zoo.parallel_env(level=level, num_agents=n_agents, record=record, 
                                recipes=recipes, action_scheme=action_scheme, obs_spaces=["feature_vector"])
 
 
-with open(r"agent4_7x7_tomato_salad.pickle", "rb") as output_file:
+with open(r"agent5_7x7_tomato_salad.pickle", "rb") as output_file:
     agent = pickle.load(output_file)
 
 
@@ -38,7 +38,7 @@ def select_action(dqn_agent, state: np.ndarray) -> np.ndarray:
 class CookingAgent:
 
     def get_action(self, observation) -> int:
-        return select_action(agent, observation).item()
+        return agent.select_action(observation)
 
 
 cooking_agent = CookingAgent()

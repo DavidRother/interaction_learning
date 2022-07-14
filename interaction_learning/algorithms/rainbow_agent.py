@@ -1,16 +1,13 @@
-from typing import Dict, List, Tuple
-
-import gym
-import matplotlib.pyplot as plt
+from typing import Dict
 import numpy as np
 import torch
 import torch.optim as optim
 from torch.nn.utils import clip_grad_norm_
+import random
 
 from interaction_learning.utils.replay_buffer import ReplayBuffer
 from interaction_learning.utils.priorotized_replay_buffer import PrioritizedReplayBuffer
 from interaction_learning.algorithms.rainbow_network import Network
-from interaction_learning.utils.struct_conversion import convert_numpy_obs_to_torch_dict
 
 
 class DQNAgent:
@@ -51,10 +48,14 @@ class DQNAgent:
             prior_eps: float = 1e-6,
             # Categorical DQN parameters
             v_min: float = 0.0,
-            v_max: float = 200.0,
+            # 200
+            v_max: float = 15.0,
             atom_size: int = 51,
             # N-step Learning
             n_step: int = 3,
+            epsilon=0.4,
+            epsilon_decay=0.000001,
+            epsilon_min=0.2
     ):
         """Initialization.
 
@@ -82,15 +83,13 @@ class DQNAgent:
         self.batch_size = batch_size
         self.target_update = target_update
         self.gamma = gamma
-        self.epsilon = 0.4
-        self.epsilon_decay = 0.000001
-        self.epsilon_min = 0.2
+        self.epsilon = epsilon
+        self.epsilon_decay = epsilon_decay
+        self.epsilon_min = epsilon_min
         # NoisyNet: All attributes related to epsilon are removed
 
         # device: cpu / gpu
-        self.device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu"
-        )
+        self.device = torch.device("cpu")
         print(self.device)
 
         # PER
@@ -130,11 +129,32 @@ class DQNAgent:
         # optimizer
         self.optimizer = optim.Adam(self.dqn.parameters())
 
-        # transition to store in memory
-        self.transition = list()
-
         # mode: train / test
         self.is_test = False
+        
+    def select_action(self, state):
+        b = random.random()
+        if self.epsilon > b:
+            selected_action = self.action_space.sample()
+        else:
+            with torch.no_grad():
+                selected_action = self.dqn(torch.Tensor(state).to(self.device)).argmax()
+                selected_action = selected_action.detach().cpu().numpy()
+
+        return selected_action
+    
+    def store_transition(self, transition):
+
+        # N-step transition
+        if self.use_n_step:
+            one_step_transition = self.memory_n.store(*transition)
+        # 1-step transition
+        else:
+            one_step_transition = transition
+
+        # add a single step transition
+        if one_step_transition:
+            self.memory.store(*one_step_transition)
 
     def update_model(self) -> torch.Tensor:
         """Update the model by gradient descent."""
@@ -179,31 +199,6 @@ class DQNAgent:
         self.epsilon = max([self.epsilon_min, self.epsilon - self.epsilon_decay])
 
         return loss.item()
-
-    def test(self, video_folder: str) -> None:
-        """Test the agent."""
-        self.is_test = True
-
-        # for recording a video
-        naive_env = self.env
-        self.env = gym.wrappers.RecordVideo(self.env, video_folder=video_folder)
-
-        state = self.env.reset()
-        done = False
-        score = 0
-
-        while not done:
-            action = self.select_action(state)
-            next_state, reward, done = self.step(action)
-
-            state = next_state
-            score += reward
-
-        print("score: ", score)
-        self.env.close()
-
-        # reset
-        self.env = naive_env
 
     def _compute_dqn_loss(self, samples: Dict[str, np.ndarray], gamma: float) -> torch.Tensor:
         """Return categorical dqn loss."""
@@ -256,18 +251,11 @@ class DQNAgent:
         """Hard update: target <- local."""
         self.dqn_target.load_state_dict(self.dqn.state_dict())
 
-    def _plot(
-            self,
-            frame_idx: int,
-            scores: List[float],
-            losses: List[float],
-    ):
-        """Plot the training progresses."""
-        plt.figure(figsize=(20, 5))
-        plt.subplot(131)
-        plt.title('frame %s. score: %s' % (frame_idx, np.mean(scores[-10:])))
-        plt.plot(scores)
-        plt.subplot(132)
-        plt.title('loss')
-        plt.plot(losses)
-        plt.show()
+    def params(self):
+        params = {"init_mem_requirement": self.init_mem_requirement, "batch_size": self.batch_size,
+                  "target_update": self.target_update, "gamma": self.gamma, "epsilon": self.epsilon,
+                  "epsilon_decay": self.epsilon_decay, "epsilon_min": self.epsilon_min, "v_min": self.v_min,
+                  "v_max": self.v_max, "atom_size": self.atom_size}
+        return params
+
+

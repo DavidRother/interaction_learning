@@ -1,105 +1,95 @@
 from typing import Tuple
-from interaction_learning.plotting.progress_plot import plot
-from interaction_learning.utils.struct_conversion import convert_dict_to_numpy, convert_numpy_obs_to_torch_dict
-import torch
+from interaction_learning.utils.struct_conversion import convert_dict_to_numpy
 import numpy as np
-import random
+import tqdm
+import pickle
+import evalpy
 
 
-def convert_state(state, device):
-    torch_state = {}
-    for k, v in state.items():
-        torch_state[k] = torch.FloatTensor(v).unsqueeze(dim=0).to(device)
-    return torch_state
-
-
-def select_action(dqn_agent, state: np.ndarray) -> np.ndarray:
-    """Select an action from the input state."""
-    b = random.random()
-    if dqn_agent.epsilon > b:
-        selected_action = dqn_agent.action_space.sample()
-        # print(f"random action {selected_action}")
-    else:
-        with torch.no_grad():
-            # selected_action = dqn_agent.dqn(convert_numpy_obs_to_torch_dict(state, dqn_agent.device, batch=False)).argmax()
-            selected_action = dqn_agent.dqn(torch.Tensor(state).to(dqn_agent.device)).argmax()
-            selected_action = selected_action.detach().cpu().numpy()
-
-        # print(f"network action {selected_action}")
-
-    if not dqn_agent.is_test:
-        dqn_agent.transition = [state, selected_action]
-
-    return selected_action
-
-
-def step(dqn_agent, env, action: np.ndarray) -> Tuple[np.ndarray, np.float64, bool]:
+def step(env, action: np.ndarray) -> Tuple[np.ndarray, np.float64, bool]:
     """Take an action and return the response of the env."""
     action_dict = {"player_0": action}
     next_state, reward, done, _ = env.step(action_dict)
     next_state = convert_dict_to_numpy(next_state["player_0"])
     done = done["player_0"]
     reward = reward["player_0"]
-
-    if not dqn_agent.is_test:
-        dqn_agent.transition += [reward, next_state, done]
-
-        # N-step transition
-        if dqn_agent.use_n_step:
-            one_step_transition = dqn_agent.memory_n.store(*dqn_agent.transition)
-        # 1-step transition
-        else:
-            one_step_transition = dqn_agent.transition
-
-        # add a single step transition
-        if one_step_transition:
-            dqn_agent.memory.store(*one_step_transition)
-
     return next_state, reward, done
 
 
-def train(dqn_agent, env, num_steps: int, evalpy_config=None):
+def train(dqn_agent, env, num_steps: int, agent_string, agent_dir, checkpoint_save=50000, evalpy_config=None):
     """Train the agent."""
     dqn_agent.is_test = False
 
-    state = env.reset()["player_0"]
-    update_cnt = 0
-    losses = []
-    scores = []
-    score = 0
+    evalpy.set_project(evalpy_config["project_path"], evalpy_config["project_folder"])
 
-    for frame_idx in range(1, num_steps + 1):
-        action = select_action(dqn_agent, state)
-        next_state, reward, done = step(dqn_agent, env, action)
+    with evalpy.start_run(evalpy_config["experiment_name"]):
 
-        state = next_state
-        score += reward
+        state = env.reset()["player_0"]
+        update_cnt = 0
+        losses = []
+        scores = []
+        score = 0
+        checkpoint_counter = 0
 
-        # NoisyNet: removed decrease of epsilon
+        progress_bar = tqdm.tqdm(range(1, num_steps + 1))
 
-        # PER: increase beta
-        fraction = min(frame_idx / num_steps, 1.0)
-        dqn_agent.beta = dqn_agent.beta + fraction * (1.0 - dqn_agent.beta)
+        stat = {"Last episode score": 0, "Best Score": 0, "Epsilon": dqn_agent.epsilon, "Loss": 0,
+                "Last Episode Length": 0}
+        episode_start_frame = 1
+        for training_idx in progress_bar:
 
-        # if episode ends
-        if done:
-            print(f"final episode score: {score} | epsilon: {dqn_agent.epsilon}")
-            state = convert_dict_to_numpy(env.reset()["player_0"])
-            scores.append(score)
-            score = 0
+            action = dqn_agent.select_action(state)
+            next_state, reward, done = step(env, action)
 
-        # if training is ready
-        if len(dqn_agent.memory) >= dqn_agent.init_mem_requirement:
-            loss = dqn_agent.update_model()
-            losses.append(loss)
-            update_cnt += 1
+            transition = [state, action, reward, next_state, done]
+            if not dqn_agent.is_test:
+                dqn_agent.store_transition(transition)
 
-            # if hard update is needed
-            if update_cnt % dqn_agent.target_update == 0:
-                dqn_agent._target_hard_update()
+            state = next_state
+            score += reward
 
-        # plotting
-        # if frame_idx % plotting_interval == 0:
-        #     plot(frame_idx, scores, losses)
+            # NoisyNet: removed decrease of epsilon
 
-    env.close()
+            # PER: increase beta
+            fraction = min(training_idx / num_steps, 1.0)
+            dqn_agent.beta = dqn_agent.beta + fraction * (1.0 - dqn_agent.beta)
+
+            # if episode ends
+            if done:
+                episode_end_frame = training_idx
+                stat["Last Episode Length"] = episode_end_frame - episode_start_frame + 1
+                episode_start_frame = episode_end_frame + 1
+                state = env.reset()["player_0"]
+                scores.append(score)
+                stat["Last episode score"] = float(score)
+                stat["Best Score"] = float(max(scores))
+                score = 0
+
+                stat["Epsilon"] = dqn_agent.epsilon
+
+                evalpy.log_run_step(stat, step_forward=True)
+
+            # if training is ready
+            if len(dqn_agent.memory) >= dqn_agent.init_mem_requirement:
+                loss = dqn_agent.update_model()
+                losses.append(loss)
+                update_cnt += 1
+                stat["Loss"] = loss
+
+                # if hard update is needed
+                if update_cnt % dqn_agent.target_update == 0:
+                    dqn_agent._target_hard_update()
+
+            if training_idx % checkpoint_save == 0:
+                with open(f"{agent_dir}checkpoint_{checkpoint_counter}_{agent_string}", "wb") as output_file:
+                    pickle.dump(dqn_agent, output_file)
+
+            progress_bar.set_postfix(stat)
+            # plotting
+            # if frame_idx % plotting_interval == 0:
+            #     plot(frame_idx, scores, losses)
+
+        env.close()
+
+        evalpy.log_run_entries(stat)
+        evalpy.log_run_entries(dqn_agent.params())
