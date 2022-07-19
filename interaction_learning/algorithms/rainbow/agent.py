@@ -102,7 +102,7 @@ class DQNAgent:
         self.support = torch.linspace(self.v_min, self.v_max, self.atom_size).to(self.device)
 
         # networks: dqn, dqn_target
-        self.dqn = Network( obs_dim, action_dim, self.atom_size, self.support).to(self.device)
+        self.dqn = Network(obs_dim, action_dim, self.atom_size, self.support).to(self.device)
         self.dqn_target = Network(obs_dim, action_dim, self.atom_size, self.support).to(self.device)
         self.dqn_target.load_state_dict(self.dqn.state_dict())
         self.dqn_target.eval()

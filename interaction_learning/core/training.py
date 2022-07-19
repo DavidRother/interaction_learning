@@ -83,6 +83,7 @@ def train(dqn_agent, env, num_steps: int, agent_string, agent_dir, checkpoint_sa
             if training_idx % checkpoint_save == 0:
                 with open(f"{agent_dir}checkpoint_{checkpoint_counter}_{agent_string}", "wb") as output_file:
                     pickle.dump(dqn_agent, output_file)
+                checkpoint_counter += 1
 
             progress_bar.set_postfix(stat)
             # plotting

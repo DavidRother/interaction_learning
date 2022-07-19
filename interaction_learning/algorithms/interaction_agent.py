@@ -2,13 +2,23 @@ from interaction_learning.utils.replay_buffer import ReplayBuffer
 from interaction_learning.utils.priorotized_replay_buffer import PrioritizedReplayBuffer
 from interaction_learning.algorithms.rainbow_network import Network
 from interaction_learning.utils.struct_conversion import convert_numpy_obs_to_torch_dict
+from interaction_learning.algorithms.rainbow.agent import DQNAgent
 
 
 class InteractionAgent:
 
-    def __init__(self, tom_model, obs_dim, memory_size, batch_size, alpha, n_step, gamma):
+    def __init__(self, tom_model, impact_model, obs_space, action_space, batch_size, target_update,
+                 initial_mem_requirement, obs_dim, memory_size, alpha, n_step, gamma):
         self.agents = {}
         self.tom_model = tom_model
+        self.impact_model = impact_model
+
+        self.obs_space = obs_space
+        self.action_space = action_space
+        self.target_update = target_update
+        self.initial_mem_requirement = initial_mem_requirement
+        self.batch_size = batch_size
+
         self.memory = PrioritizedReplayBuffer(
             obs_dim, memory_size, batch_size, alpha=alpha
         )
@@ -21,8 +31,9 @@ class InteractionAgent:
                 obs_dim, memory_size, batch_size, n_step=n_step, gamma=gamma
             )
 
-    def train_new_goal(self, goal):
-        new_agent = DQNAgent(obs_space, action_space, memory_size, batch_size, target_update, initial_mem_requirement, n_step=3)
+    def add_new_goal(self, goal):
+        new_agent = DQNAgent(self.obs_space, self.action_space, self.batch_size, self.target_update,
+                             self.initial_mem_requirement)
         self.agents[goal] = new_agent
 
     def train_interaction(self, goal):

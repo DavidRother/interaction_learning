@@ -253,7 +253,7 @@ class DQNAgent:
 
     def params(self):
         params = {"init_mem_requirement": self.init_mem_requirement, "batch_size": self.batch_size,
-                  "target_update": self.target_update, "gamma": self.gamma, "epsilon": self.epsilon,
+                  "target_update": self.target_update, "gamma": self.gamma, "Start_epsilon": self.epsilon,
                   "epsilon_decay": self.epsilon_decay, "epsilon_min": self.epsilon_min, "v_min": self.v_min,
                   "v_max": self.v_max, "atom_size": self.atom_size}
         return params

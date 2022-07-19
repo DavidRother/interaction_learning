@@ -10,26 +10,13 @@ from torch.nn.utils import clip_grad_norm_
 import pickle
 
 from interaction_learning.algorithms.rainbow_agent import DQNAgent
+from interaction_learning.algorithms.interaction_agent import InteractionAgent
 from interaction_learning.core.training import train
 from gym_cooking.environment import cooking_zoo
+from gym_cooking.cooking_book.recipe_drawer import RECIPES
 
-# environment
-n_agents = 1
-num_humans = 0
-render = False
 
-level = 'open_room_salad'
 seed = 123463
-record = False
-max_num_timesteps = 100
-recipes = ["TomatoLettuceSalad"]
-action_scheme = "scheme3"
-
-env_id = "CookingZoo-v0"
-env = cooking_zoo.parallel_env(level=level, num_agents=n_agents, record=record, max_steps=max_num_timesteps,
-                               recipes=recipes, action_scheme=action_scheme, obs_spaces=["feature_vector"])
-
-obs_space, action_space = env.observation_spaces["player_0"], env.action_spaces["player_0"]
 
 
 def seed_torch(seed):
@@ -43,15 +30,49 @@ np.random.seed(seed)
 random.seed(seed)
 seed_torch(seed)
 
+# environment
+n_agents = 1
+num_humans = 0
+render = False
+
+level = 'open_room_salad'
+record = False
+max_num_timesteps = 100
+
+goal_encodings = {name: recipe.goal_encoding for name, recipe in RECIPES.items()}
+
+recipes = ["TomatoLettuceSalad"]
+action_scheme = "scheme3"
+
+env_id = "CookingZoo-v0"
+env = cooking_zoo.parallel_env(level=level, num_agents=n_agents, record=record, max_steps=max_num_timesteps,
+                               recipes=recipes, action_scheme=action_scheme, obs_spaces=["feature_vector"])
+
+obs_space, action_space = env.observation_spaces["player_0"], env.action_spaces["player_0"]
+
+tom_model = None
+impact_model = None
+
 # parameters
 num_frames = 1500000
 memory_size = 100000
 initial_mem_requirement = 5000
 batch_size = 512
 target_update = 100
+obs_dim = obs_space.shape[0]
+gamma = 0.99
+# PER parameters
+alpha = 0.2
+n_step = 3
 
 v_min = 0  # 0
 v_max = 200  # 200
+
+agent = InteractionAgent(tom_model, impact_model, obs_space, action_space, batch_size, target_update,
+                         initial_mem_requirement, obs_dim, memory_size, alpha, n_step, gamma)
+
+
+# parameters
 
 
 evalpy_config = {"project_path": "./", "project_folder": "test_logs/", "experiment_name": "cooking_tomato_example"}
