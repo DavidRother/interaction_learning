@@ -58,7 +58,7 @@ evalpy_config = {"project_path": "./", "project_folder": "test_logs/", "experime
 agent_dir = "agents/"
 
 for idx in range(1):
-    agent_save_string = f"agent{idx}_7x7_tomato_salad_test2.pickle"
+    agent_save_string = f"agent{idx}_7x7_tomato_salad_test3.pickle"
     # train
     agent = DQNAgent(obs_space, action_space, memory_size, batch_size, target_update, initial_mem_requirement,
                      v_min=v_min, v_max=v_max, n_step=3)

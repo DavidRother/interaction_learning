@@ -131,7 +131,7 @@ class DQNAgent:
 
         # mode: train / test
         self.is_test = False
-        
+
     def select_action(self, state):
         b = random.random()
         if self.epsilon > b:
@@ -142,7 +142,7 @@ class DQNAgent:
                 selected_action = selected_action.detach().cpu().numpy()
 
         return selected_action
-    
+
     def store_transition(self, transition):
 
         # N-step transition
@@ -225,13 +225,8 @@ class DQNAgent:
             u = b.ceil().long()
 
             offset = (
-                torch.linspace(
-                    0, (self.batch_size - 1) * self.atom_size, self.batch_size
-                ).long()
-                    .unsqueeze(1)
-                    .expand(self.batch_size, self.atom_size)
-                    .to(self.device)
-            )
+                torch.linspace(0, (self.batch_size - 1) * self.atom_size, self.batch_size).long().unsqueeze(1).expand(
+                    self.batch_size, self.atom_size).to(self.device))
 
             proj_dist = torch.zeros(next_dist.size(), device=self.device)
             proj_dist.view(-1).index_add_(
@@ -247,7 +242,7 @@ class DQNAgent:
 
         return elementwise_loss
 
-    def _target_hard_update(self):
+    def target_hard_update(self):
         """Hard update: target <- local."""
         self.dqn_target.load_state_dict(self.dqn.state_dict())
 
@@ -257,5 +252,3 @@ class DQNAgent:
                   "epsilon_decay": self.epsilon_decay, "epsilon_min": self.epsilon_min, "v_min": self.v_min,
                   "v_max": self.v_max, "atom_size": self.atom_size}
         return params
-
-

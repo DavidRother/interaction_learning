@@ -1,14 +1,11 @@
 from typing import Dict, List, Tuple
 
-import gym
-import matplotlib.pyplot as plt
+import random
 import numpy as np
 import torch
 import torch.optim as optim
 from torch.nn.utils import clip_grad_norm_
 
-from interaction_learning.utils.replay_buffer import ReplayBuffer
-from interaction_learning.utils.priorotized_replay_buffer import PrioritizedReplayBuffer
 from interaction_learning.algorithms.rainbow_network import Network
 from interaction_learning.utils.struct_conversion import convert_numpy_obs_to_torch_dict
 
@@ -40,7 +37,6 @@ class DQNAgent:
             self,
             obs_space,
             action_space,
-            memory_size: int,
             batch_size: int,
             target_update: int,
             init_mem_requirement: int = 128,
@@ -52,26 +48,26 @@ class DQNAgent:
             v_min: float = 0.0,
             v_max: float = 200.0,
             atom_size: int = 51,
+            epsilon=0.4,
+            epsilon_decay=0.000001,
+            epsilon_min=0.2
     ):
         """Initialization.
 
         Args:
             obs_space
             action_space
-            memory_size (int): length of memory
             batch_size (int): batch size for sampling
             init_mem_requirement (int): initial number of samples to start learning
             target_update (int): period for target model's hard update
             gamma (float): discount factor
-            alpha (float): determines how much prioritization is used
             beta (float): determines how much importance sampling is used
             prior_eps (float): guarantees every transition can be sampled
             v_min (float): min value of support
             v_max (float): max value of support
             atom_size (int): the unit number of support
-            n_step (int): step number to calculate n-step td error
         """
-        obs_dim = obs_space["symbolic_observation"].shape
+        obs_dim = obs_space.shape[0]
         action_dim = action_space.n
 
         self.action_space = action_space
@@ -79,16 +75,14 @@ class DQNAgent:
         self.batch_size = batch_size
         self.target_update = target_update
         self.gamma = gamma
-        self.epsilon = 0.3
-        self.epsilon_decay = 0.000001
-        self.epsilon_min = 0.1
+        self.epsilon = epsilon
+        self.epsilon_decay = epsilon_decay
+        self.epsilon_min = epsilon_min
         # NoisyNet: All attributes related to epsilon are removed
 
         # device: cpu / gpu
-        self.device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu"
-        )
-        print(self.device)
+        self.device = torch.device("cpu")
+        # print(self.device)
 
         # PER
         # memory for 1-step Learning
@@ -115,6 +109,20 @@ class DQNAgent:
 
         # mode: train / test
         self.is_test = False
+
+    def select_action(self, state):
+        b = random.random()
+        if self.epsilon > b:
+            selected_action = self.action_space.sample()
+        else:
+            with torch.no_grad():
+                selected_action = self.compute_q_values(state).argmax()
+                selected_action = selected_action.detach().cpu().numpy()
+
+        return selected_action
+
+    def compute_q_values(self, state):
+        return self.dqn(torch.Tensor(state).to(self.device))
 
     def update_model(self, memory, n_step_memory=None, n_step=3) -> torch.Tensor:
         """Update the model by gradient descent."""
@@ -207,6 +215,15 @@ class DQNAgent:
 
         return elementwise_loss
 
-    def _target_hard_update(self):
+    def target_hard_update(self):
         """Hard update: target <- local."""
         self.dqn_target.load_state_dict(self.dqn.state_dict())
+
+    def params(self, identifier=""):
+        params = {"init_mem_requirement": self.init_mem_requirement, "batch_size": self.batch_size,
+                  "target_update": self.target_update, "gamma": self.gamma, "Start_epsilon": self.epsilon,
+                  "epsilon_decay": self.epsilon_decay, "epsilon_min": self.epsilon_min, "v_min": self.v_min,
+                  "v_max": self.v_max, "atom_size": self.atom_size}
+        if identifier:
+            params = {f"{k} {identifier}": v for k, v in params.items()}
+        return params

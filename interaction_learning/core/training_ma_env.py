@@ -1,85 +1,112 @@
-from typing import Tuple, Dict
-from interaction_learning.plotting.progress_plot import plot
-import torch
-import numpy as np
+import tqdm
+import pickle
+import evalpy
 
 
-def select_action(dqn_agent, state: np.ndarray) -> np.ndarray:
-    """Select an action from the input state."""
-    # NoisyNet: no epsilon greedy action selection
-    selected_action = dqn_agent.dqn(
-        torch.FloatTensor(state).to(dqn_agent.device)
-    ).argmax()
-    selected_action = selected_action.detach().cpu().numpy()
-
-    if not dqn_agent.is_test:
-        dqn_agent.transition = [state, selected_action]
-
-    return selected_action
+def gather_actions(agents, state):
+    return {agent: agents[agent].select_action(state[agent]) for agent in agents}
 
 
-def step(dqn_agent, env, action: np.ndarray) -> Tuple[np.ndarray, np.float64, bool]:
-    """Take an action and return the response of the env."""
-    next_state, reward, done, _ = env.step(action)
-
-    if not dqn_agent.is_test:
-        dqn_agent.transition += [reward, next_state, done]
-
-        # N-step transition
-        if dqn_agent.use_n_step:
-            one_step_transition = dqn_agent.memory_n.store(*dqn_agent.transition)
-        # 1-step transition
-        else:
-            one_step_transition = dqn_agent.transition
-
-        # add a single step transition
-        if one_step_transition:
-            dqn_agent.memory.store(*one_step_transition)
-
-    return next_state, reward, done
-
-
-def train(dqn_agent, env, num_steps: int, plotting_interval: int = 200):
+def train(agents, env, num_steps: int, agent_string, agent_dir, checkpoint_save=50000, evalpy_config=None):
     """Train the agent."""
-    dqn_agent.is_test = False
 
-    state = env.reset()
-    update_cnt = 0
-    losses = []
-    scores = []
-    score = 0
+    evalpy.set_project(evalpy_config["project_path"], evalpy_config["project_folder"])
 
-    for frame_idx in range(1, num_steps + 1):
-        action = select_action(dqn_agent, state)
-        next_state, reward, done = step(dqn_agent, env, action)
+    with evalpy.start_run(evalpy_config["experiment_name"]):
 
-        state = next_state
-        score += reward
+        state = env.reset()
+        update_cnt = 0
+        losses = {agent: [] for agent in agents}
+        scores = {agent: [] for agent in agents}
+        score = {agent: 0 for agent in agents}
+        checkpoint_ctr = 0
 
-        # NoisyNet: removed decrease of epsilon
+        progress_bar = tqdm.tqdm(range(1, num_steps + 1))
+        stat = {}
+        for agent in agents:
+            stat.update({f"Last episode score {agent}": 0, f"Best Score {agent}": 0})
+            try:
+                stat.update(agents[agent].stats(agent))
+            except AttributeError:
+                pass
+        stat.update({"Last Episode Length": 0})
+        episode_start_frame = 1
+        for training_idx in progress_bar:
 
-        # PER: increase beta
-        fraction = min(frame_idx / num_steps, 1.0)
-        dqn_agent.beta = dqn_agent.beta + fraction * (1.0 - dqn_agent.beta)
+            actions = gather_actions(agents, state)
+            next_state, reward, done, _ = env.step(actions)
 
-        # if episode ends
-        if done:
-            state = env.reset()
-            scores.append(score)
-            score = 0
+            for agent in agents:
+                if agents[agent].is_test:
+                    pass
+                transition = [state[agent], actions[agent], reward[agent], next_state[agent], done[agent]]
+                agents[agent].store_transition(transition)
 
-        # if training is ready
-        if len(dqn_agent.memory) >= dqn_agent.batch_size:
-            loss = dqn_agent.update_model()
-            losses.append(loss)
-            update_cnt += 1
+            state = next_state
+            for agent in agents:
+                score[agent] += reward[agent]
 
-            # if hard update is needed
-            if update_cnt % dqn_agent.target_update == 0:
-                dqn_agent._target_hard_update()
+            for agent in agents:
+                try:
+                    fraction = min(training_idx / num_steps, 1.0)
+                    agents[agent].postprocess_step(fraction)
+                except AttributeError:
+                    pass
 
-        # plotting
-        if frame_idx % plotting_interval == 0:
-            plot(frame_idx, scores, losses)
+            # PER: increase beta
+            # fraction = min(training_idx / num_steps, 1.0)
+            # dqn_agent.beta = dqn_agent.beta + fraction * (1.0 - dqn_agent.beta)
 
-    env.close()
+            # if episode ends
+            if all(done.values()):
+                episode_end_frame = training_idx
+                stat["Last Episode Length"] = episode_end_frame - episode_start_frame + 1
+                episode_start_frame = episode_end_frame + 1
+                state = env.reset()
+                for agent in agents:
+                    scores[agent].append(score[agent])
+                    stat[f"Last episode score {agent}"] = float(score[agent])
+                    stat[f"Best Score {agent}"] = float(max(scores[agent]))
+                    score[agent] = 0
+
+                    try:
+                        stat.update(agents[agent].stats(agent))
+                    except AttributeError:
+                        pass
+
+                evalpy.log_run_step(stat, step_forward=True)
+
+            # if training is ready
+            for agent in agents:
+                if agents[agent].is_test:
+                    continue
+                try:
+                    if agents[agent].training_required:
+                        loss = agents[agent].update_model()
+                        losses[agent].append(loss)
+                        update_cnt += 1
+                        for loss_descriptor in loss:
+                            stat[loss_descriptor] = loss[loss_descriptor]
+
+                        # if hard update is needed
+                        if update_cnt % agents[agent].target_update == 0:
+                            agents[agent].target_hard_update()
+                except AttributeError:
+                    continue
+
+            if training_idx % checkpoint_save == 0:
+                for agent in agents:
+                    with open(f"{agent_dir}checkpoint_{checkpoint_ctr}_{agent}_{agent_string}", "wb") as output_file:
+                        pickle.dump(agents[agent], output_file)
+                checkpoint_ctr += 1
+
+            progress_bar.set_postfix(stat)
+            # plotting
+            # if frame_idx % plotting_interval == 0:
+            #     plot(frame_idx, scores, losses)
+
+        env.close()
+
+        evalpy.log_run_entries(stat)
+        for agent in agents:
+            evalpy.log_run_entries(agents[agent].params(agent))

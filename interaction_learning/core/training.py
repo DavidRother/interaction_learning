@@ -78,7 +78,7 @@ def train(dqn_agent, env, num_steps: int, agent_string, agent_dir, checkpoint_sa
 
                 # if hard update is needed
                 if update_cnt % dqn_agent.target_update == 0:
-                    dqn_agent._target_hard_update()
+                    dqn_agent.target_hard_update()
 
             if training_idx % checkpoint_save == 0:
                 with open(f"{agent_dir}checkpoint_{checkpoint_counter}_{agent_string}", "wb") as output_file:

@@ -11,7 +11,7 @@ import pickle
 
 from interaction_learning.algorithms.rainbow_agent import DQNAgent
 from interaction_learning.algorithms.interaction_agent import InteractionAgent
-from interaction_learning.core.training import train
+from interaction_learning.core.training_ma_env import train
 from gym_cooking.environment import cooking_zoo
 from gym_cooking.cooking_book.recipe_drawer import RECIPES
 
@@ -39,7 +39,7 @@ level = 'open_room_salad'
 record = False
 max_num_timesteps = 100
 
-goal_encodings = {name: recipe.goal_encoding for name, recipe in RECIPES.items()}
+goal_encodings = {name: recipe().goal_encoding for name, recipe in RECIPES.items()}
 
 recipes = ["TomatoLettuceSalad"]
 action_scheme = "scheme3"
@@ -71,19 +71,19 @@ v_max = 200  # 200
 agent = InteractionAgent(tom_model, impact_model, obs_space, action_space, batch_size, target_update,
                          initial_mem_requirement, obs_dim, memory_size, alpha, n_step, gamma)
 
+agent.add_new_goal(tuple(goal_encodings[recipes[0]]))
+agent.switch_active_goal(tuple(goal_encodings[recipes[0]]))
+agent.is_test = False
 
 # parameters
 
-
 evalpy_config = {"project_path": "./", "project_folder": "test_logs/", "experiment_name": "cooking_tomato_example"}
 agent_dir = "agents/"
+idx = 0
+agent_save_string = f"agent{idx}_7x7_tomato_salad_test4.pickle"
+# train
+agents = {"player_0": agent}
+train(agents, env, num_frames, agent_save_string, agent_dir, checkpoint_save=50000, evalpy_config=evalpy_config)
 
-for idx in range(1):
-    agent_save_string = f"agent{idx}_7x7_tomato_salad_test2.pickle"
-    # train
-    agent = DQNAgent(obs_space, action_space, memory_size, batch_size, target_update, initial_mem_requirement,
-                     v_min=v_min, v_max=v_max, n_step=3)
-    train(agent, env, num_frames, agent_save_string, agent_dir, checkpoint_save=50000, evalpy_config=evalpy_config)
-
-    with open(f'{agent_dir}{agent_save_string}', "wb") as output_file:
-        pickle.dump(agent, output_file)
+with open(f'{agent_dir}{agent_save_string}', "wb") as output_file:
+    pickle.dump(agent, output_file)
