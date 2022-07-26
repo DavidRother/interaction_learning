@@ -37,6 +37,8 @@ class InteractionAgent:
             )
         self.current_goal = None
         self.is_test = False
+        self.interaction_learning = False
+        self.interactive_mode = False
 
     def add_new_goal(self, goal):
         new_agent = DQNAgent(self.obs_space, self.action_space, self.batch_size, self.target_update,
@@ -66,7 +68,6 @@ class InteractionAgent:
         return 0
 
     def store_transition(self, transition):
-
         # N-step transition
         if self.use_n_step:
             one_step_transition = self.memory_n.store(*transition)
@@ -87,8 +88,12 @@ class InteractionAgent:
                                      n_step=self.n_step, gamma=self.gamma)
 
     def select_action(self, state):
-        agent = self.get_current_agent()
-        return agent.select_action(state)
+        if self.interactive_mode:
+            agent = self.get_current_agent()
+            return agent.select_action(state)
+        else:
+            agent = self.get_current_agent()
+            return agent.select_action(state)
 
     def update_model(self):
         self.agents[self.current_goal].update_model(self.memory, self.memory_n, self.n_step)

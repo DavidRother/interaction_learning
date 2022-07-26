@@ -35,7 +35,7 @@ n_agents = 1
 num_humans = 0
 render = False
 
-level = 'open_room_salad'
+level = 'open_room_interaction'
 record = False
 max_num_timesteps = 100
 
@@ -54,8 +54,8 @@ tom_model = None
 impact_model = None
 
 # parameters
-num_frames = 1500000
-memory_size = 100000
+num_frames = 1000000
+memory_size = 50000
 initial_mem_requirement = 5000
 batch_size = 512
 target_update = 100
