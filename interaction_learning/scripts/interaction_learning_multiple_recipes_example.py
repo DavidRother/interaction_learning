@@ -101,6 +101,7 @@ for recipe in recipes_to_learn:
         print("saving Interaction Agent")
         pickle.dump(agent, output_file)
 
+print("Finished Single Agent Learning")
 # Learn interaction now with each recipe once
 agent.interaction_learning = True
 agent.interactive_mode = True
