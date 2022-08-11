@@ -86,7 +86,7 @@ def train(agents, env, num_steps: int, agent_string, agent_dir, checkpoint_save=
                         losses[agent].append(loss)
                         update_cnt += 1
                         for loss_descriptor in loss:
-                            stat[loss_descriptor] = loss[loss_descriptor]
+                            stat[f"{loss_descriptor} {agent}"] = loss[loss_descriptor]
 
                         # if hard update is needed
                         if update_cnt % agents[agent].target_update == 0:

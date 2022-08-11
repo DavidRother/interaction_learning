@@ -171,8 +171,8 @@ class DQNAgent:
     def _compute_dqn_loss(self, samples: Dict[str, np.ndarray], gamma: float) -> torch.Tensor:
         """Return categorical dqn loss."""
         device = self.device  # for shortening the following lines
-        state = convert_numpy_obs_to_torch_dict(samples["obs"], device, batch=True)
-        next_state = convert_numpy_obs_to_torch_dict(samples["next_obs"], device, batch=True)
+        state = torch.Tensor(samples["obs"]).to(device)
+        next_state = torch.Tensor(samples["next_obs"]).to(device)
         action = torch.LongTensor(samples["acts"]).to(device)
         reward = torch.FloatTensor(samples["rews"].reshape(-1, 1)).to(device)
         done = torch.FloatTensor(samples["done"].reshape(-1, 1)).to(device)

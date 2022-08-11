@@ -1,7 +1,5 @@
 from interaction_learning.utils.replay_buffer import ReplayBuffer
 from interaction_learning.utils.priorotized_replay_buffer import PrioritizedReplayBuffer
-from interaction_learning.algorithms.rainbow_network import Network
-from interaction_learning.utils.struct_conversion import convert_numpy_obs_to_torch_dict
 from interaction_learning.algorithms.rainbow.agent import DQNAgent
 
 
@@ -32,9 +30,8 @@ class InteractionAgent:
         self.use_n_step = True if n_step > 1 else False
         if self.use_n_step:
             self.n_step = n_step
-            self.memory_n = ReplayBuffer(
-                obs_dim, memory_size, batch_size, n_step=n_step, gamma=gamma
-            )
+            self.memory_n = ReplayBuffer(obs_dim, memory_size, batch_size, n_step=n_step, gamma=gamma)
+        self.training_required = False
         self.current_goal = None
         self.is_test = False
         self.interaction_learning = False
@@ -79,6 +76,9 @@ class InteractionAgent:
         if one_step_transition:
             self.memory.store(*one_step_transition)
 
+        if len(self.memory) >= self.initial_mem_requirement:
+            self.training_required = True
+
     def switch_active_goal(self, goal):
         if goal not in self.agents:
             raise Exception("Please only switch to goals that have already been added")
@@ -86,6 +86,7 @@ class InteractionAgent:
         self.memory = PrioritizedReplayBuffer(self.obs_dim, self.memory_size, self.batch_size, alpha=self.alpha)
         self.memory_n = ReplayBuffer(self.obs_dim, self.memory_size, self.batch_size,
                                      n_step=self.n_step, gamma=self.gamma)
+        self.training_required = False
 
     def select_action(self, state):
         if self.interactive_mode:
@@ -96,7 +97,7 @@ class InteractionAgent:
             return agent.select_action(state)
 
     def update_model(self):
-        self.agents[self.current_goal].update_model(self.memory, self.memory_n, self.n_step)
+        return {"Loss": self.agents[self.current_goal].update_model(self.memory, self.memory_n, self.n_step)}
 
     def postprocess_step(self, fraction):
         agent = self.get_current_agent()

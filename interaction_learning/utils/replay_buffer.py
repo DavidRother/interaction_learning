@@ -45,8 +45,7 @@ class ReplayBuffer:
             return ()
 
         # make a n-step transition
-        rew, next_obs, done = self._get_n_step_info(self.n_step_buffer, self.gamma
-        )
+        rew, next_obs, done = self._get_n_step_info(self.n_step_buffer, self.gamma)
         obs, act = self.n_step_buffer[0][:2]
 
         self.obs_buf[self.ptr] = obs
