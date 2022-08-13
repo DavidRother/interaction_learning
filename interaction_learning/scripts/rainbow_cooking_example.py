@@ -18,7 +18,7 @@ n_agents = 1
 num_humans = 0
 render = False
 
-level = 'open_room_salad'
+level = 'open_room_interaction2'
 seed = 123463
 record = False
 max_num_timesteps = 100

@@ -23,7 +23,7 @@ class Network(nn.Module):
 
         # set common feature layer
         self.feature_layer = nn.Sequential(
-            nn.Linear(90, 256),
+            nn.Linear(in_dim, 256),
             nn.ReLU(),
             nn.Linear(256, 128),
             nn.ReLU(),

@@ -128,9 +128,7 @@ class DQNAgent:
         """Update the model by gradient descent."""
         # PER needs beta to calculate weights
         samples = memory.sample_batch(self.beta)
-        weights = torch.FloatTensor(
-            samples["weights"].reshape(-1, 1)
-        ).to(self.device)
+        weights = torch.FloatTensor(samples["weights"].reshape(-1, 1)).to(self.device)
         indices = samples["indices"]
 
         # 1-step Learning loss
@@ -195,10 +193,7 @@ class DQNAgent:
             offset = (
                 torch.linspace(
                     0, (self.batch_size - 1) * self.atom_size, self.batch_size
-                ).long()
-                    .unsqueeze(1)
-                    .expand(self.batch_size, self.atom_size)
-                    .to(self.device)
+                ).long().unsqueeze(1).expand(self.batch_size, self.atom_size).to(self.device)
             )
 
             proj_dist = torch.zeros(next_dist.size(), device=self.device)

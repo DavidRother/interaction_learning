@@ -49,7 +49,7 @@ class DQNAgent:
             # Categorical DQN parameters
             v_min: float = 0.0,
             # 200
-            v_max: float = 15.0,
+            v_max: float = 200.0,
             atom_size: int = 51,
             # N-step Learning
             n_step: int = 3,

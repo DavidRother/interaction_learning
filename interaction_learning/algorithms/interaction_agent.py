@@ -97,11 +97,12 @@ class InteractionAgent:
             return agent.select_action(state)
 
     def update_model(self):
-        return {"Loss": self.agents[self.current_goal].update_model(self.memory, self.memory_n, self.n_step)}
+        loss = self.agents[self.current_goal].update_model(self.memory, self.memory_n, self.n_step)
+        return {"Loss": loss}
 
     def postprocess_step(self, fraction):
         agent = self.get_current_agent()
-        agent.beta + fraction * (1.0 - agent.beta)
+        agent.beta = agent.beta + fraction * (1.0 - agent.beta)
 
     def stats(self, identifier=""):
         agent = self.get_current_agent()
