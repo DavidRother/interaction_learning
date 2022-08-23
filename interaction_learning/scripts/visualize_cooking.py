@@ -18,7 +18,7 @@ env_id = "CookingZoo-v0"
 env = cooking_zoo.parallel_env(level=level, num_agents=n_agents, record=record, max_steps=max_num_timesteps,
                                recipes=recipes, action_scheme=action_scheme, obs_spaces=["feature_vector"])
 
-with open(r"./agents/agent0_7x7_tomato_salad_test3.pickle", "rb") as output_file:
+with open(r"./agents/soft_agent0_9x9_tomato_salad_test.pickle", "rb") as output_file:
     agent = pickle.load(output_file)
 
 

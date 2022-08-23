@@ -8,8 +8,6 @@ from torch.distributions import Categorical
 import gym
 import numpy as np
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
 
 class Memory(object):
     def __init__(self, memory_size: int) -> None:
@@ -37,30 +35,34 @@ class Memory(object):
 
 
 class SoftQNetwork(nn.Module):
-    def __init__(self):
+
+    def __init__(self, in_dim, out_dim, device="cpu"):
         super(SoftQNetwork, self).__init__()
         self.alpha = 4
-        self.fc1 = nn.Linear(4, 64)
-        self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(64, 256)
-        self.fc3 = nn.Linear(256, 2)
+        self.feature_layer = nn.Sequential(
+            nn.Linear(in_dim, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+        )
+        self.value_layer = nn.Sequential(nn.Linear(128, out_dim))
+        self.device = device
 
     def forward(self, x):
-        x = self.relu(self.fc1(x))
-        x = self.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+        feature = self.feature_layer(x)
+        dist = self.value_layer(feature)
+        return dist
 
-    def getV(self, q_value):
+    def get_value(self, q_value):
         v = self.alpha * torch.log(torch.sum(torch.exp(q_value / self.alpha), dim=1, keepdim=True))
         return v
 
     def select_action(self, state):
-        state = torch.FloatTensor(state).unsqueeze(0).to(device)
+        state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         # print('state : ', state)
         with torch.no_grad():
             q = self.forward(state)
-            v = self.getV(q).squeeze()
+            v = self.get_value(q).squeeze()
             # print('q & v', q, v)
             dist = torch.exp((q - v) / self.alpha)
             # print(dist)
