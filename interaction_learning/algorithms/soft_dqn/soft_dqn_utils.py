@@ -36,9 +36,9 @@ class Memory(object):
 
 class SoftQNetwork(nn.Module):
 
-    def __init__(self, in_dim, out_dim, device="cpu"):
+    def __init__(self, in_dim, out_dim, alpha, device="cpu"):
         super(SoftQNetwork, self).__init__()
-        self.alpha = 4
+        self.alpha = alpha
         self.feature_layer = nn.Sequential(
             nn.Linear(in_dim, 256),
             nn.ReLU(),

@@ -6,7 +6,7 @@ from interaction_learning.algorithms.soft_dqn.soft_dqn_agent import SoftDQNAgent
 class SoftInteractionAgent:
 
     def __init__(self, tom_model, impact_model, obs_space, action_space, batch_size, target_update,
-                 initial_mem_requirement, obs_dim, memory_size, alpha, n_step, gamma):
+                 initial_mem_requirement, obs_dim, memory_size, alpha, n_step, gamma, entropy_alpha):
         self.agents = {}
         self.tom_model = tom_model
         self.impact_model = impact_model
@@ -21,10 +21,9 @@ class SoftInteractionAgent:
         self.batch_size = batch_size
         self.alpha = alpha
         self.gamma = gamma
+        self.entropy_alpha = entropy_alpha
 
-        self.memory = PrioritizedReplayBuffer(
-            obs_dim, memory_size, batch_size, alpha=alpha
-        )
+        self.memory = PrioritizedReplayBuffer(obs_dim, memory_size, batch_size, alpha=alpha)
 
         # memory for N-step Learning
         self.use_n_step = True if n_step > 1 else False
@@ -39,7 +38,7 @@ class SoftInteractionAgent:
 
     def add_new_goal(self, goal):
         new_agent = SoftDQNAgent(self.obs_space, self.action_space, self.batch_size, self.target_update,
-                                 self.initial_mem_requirement)
+                                 self.initial_mem_requirement, alpha=self.entropy_alpha)
         self.agents[goal] = new_agent
 
     def train_interaction(self, goal):

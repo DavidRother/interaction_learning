@@ -10,7 +10,7 @@ class SoftDQNAgent:
 
     def __init__(self, obs_space, action_space, batch_size: int, target_update: int,
                  init_mem_requirement: int = 128, device="cpu", gamma: float = 0.99,
-                 beta: float = 0.6, prior_eps: float = 1e-6):
+                 beta: float = 0.6, prior_eps: float = 1e-6, alpha=2):
         obs_dim = obs_space.shape[0]
         action_dim = action_space.n
 
@@ -20,8 +20,8 @@ class SoftDQNAgent:
         self.target_update = target_update
         self.gamma = gamma
         self.device = torch.device("cpu")
-        self.soft_dqn = SoftQNetwork(obs_dim, action_dim, device).to(device)
-        self.target_soft_dqn = SoftQNetwork(obs_dim, action_dim, device).to(device)
+        self.soft_dqn = SoftQNetwork(obs_dim, action_dim, alpha, device).to(device)
+        self.target_soft_dqn = SoftQNetwork(obs_dim, action_dim, alpha, device).to(device)
         self.target_soft_dqn.load_state_dict(self.soft_dqn.state_dict())
         self.target_soft_dqn.eval()
 

@@ -64,9 +64,10 @@ gamma = 0.99
 # PER parameters
 alpha = 0.2
 n_step = 3
+entropy_alpha = 3.2
 
 agent = SoftInteractionAgent(tom_model, impact_model, obs_space, action_space, batch_size, target_update,
-                             initial_mem_requirement, obs_dim, memory_size, alpha, n_step, gamma)
+                             initial_mem_requirement, obs_dim, memory_size, alpha, n_step, gamma, entropy_alpha)
 
 agent.add_new_goal(tuple(goal_encodings[recipes[0]]))
 agent.switch_active_goal(tuple(goal_encodings[recipes[0]]))
