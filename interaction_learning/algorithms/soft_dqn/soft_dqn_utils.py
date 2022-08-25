@@ -44,6 +44,8 @@ class SoftQNetwork(nn.Module):
             nn.ReLU(),
             nn.Linear(256, 128),
             nn.ReLU(),
+            nn.Linear(256, 128),
+            nn.ReLU(),
         )
         self.value_layer = nn.Sequential(nn.Linear(128, out_dim))
         self.device = device
