@@ -14,7 +14,7 @@ from interaction_learning.algorithms.soft_interaction_agent import SoftInteracti
 from interaction_learning.core.training_ma_env import train
 from gym_cooking.environment import cooking_zoo
 from gym_cooking.cooking_book.recipe_drawer import RECIPES
-from interaction_learning.core.gather_expert_examples import gather_human_examples
+from interaction_learning.core.gather_expert_examples import gather_human_examples, gather_expert_examples
 
 seed = 123463
 
@@ -80,7 +80,9 @@ idx = 0
 agent_save_string = f"soft_agent{idx}_9x9_tomato_salad_test.pickle"
 # train
 agents = {"player_0": agent}
-gather_human_examples(agent, env, max_num_timesteps, 15)
+# gather_human_examples(agent, env, max_num_timesteps, 15)
+# with
+gather_expert_examples(agent, env, max_num_timesteps, 15)
 train(agents, env, num_frames, agent_save_string, agent_dir, checkpoint_save=50000, evalpy_config=evalpy_config)
 
 with open(f'{agent_dir}{agent_save_string}', "wb") as output_file:
