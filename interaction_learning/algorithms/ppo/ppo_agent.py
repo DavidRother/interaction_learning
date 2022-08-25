@@ -79,19 +79,4 @@ class SoftDQNAgent:
         return params
 
     def _compute_loss(self, samples, gamma):
-        batch_state = torch.Tensor(samples["obs"]).to(self.device)
-        batch_next_state = torch.Tensor(samples["next_obs"]).to(self.device)
-        batch_action = torch.LongTensor(samples["acts"]).to(self.device)
-        batch_reward = torch.FloatTensor(samples["rews"].reshape(-1, 1)).to(self.device)
-        batch_done = torch.FloatTensor(samples["done"].reshape(-1, 1)).to(self.device)
-
-        with torch.no_grad():
-            next_q = self.target_soft_dqn(batch_next_state)
-            next_v = self.target_soft_dqn.get_value(next_q)
-            y = batch_reward + (1 - batch_done) * gamma * next_v
-
-        q = self.soft_dqn(batch_state)
-        actions = batch_action.long().unsqueeze(dim=-1)
-        x = q.gather(1, actions)
-        loss = F.mse_loss(x, y, reduction="none")
-        return loss
+        pass

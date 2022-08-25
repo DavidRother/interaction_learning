@@ -35,7 +35,7 @@ n_agents = 1
 num_humans = 0
 render = False
 
-level = 'open_room_interaction2'
+level = 'open_room_interaction'
 record = False
 max_num_timesteps = 100
 
@@ -46,7 +46,8 @@ action_scheme = "scheme3"
 
 env_id = "CookingZoo-v0"
 env = cooking_zoo.parallel_env(level=level, num_agents=n_agents, record=record, max_steps=max_num_timesteps,
-                               recipes=recipes, action_scheme=action_scheme, obs_spaces=["feature_vector"])
+                               recipes=recipes, action_scheme=action_scheme, obs_spaces=["feature_vector"],
+                               ghost_agents=1)
 
 obs_space, action_space = env.observation_spaces["player_0"], env.action_spaces["player_0"]
 
@@ -64,9 +65,10 @@ gamma = 0.99
 # PER parameters
 alpha = 0.2
 n_step = 3
+entropy_alpha = 3.5
 
 agent = SoftInteractionAgent(tom_model, impact_model, obs_space, action_space, batch_size, target_update,
-                             initial_mem_requirement, obs_dim, memory_size, alpha, n_step, gamma)
+                             initial_mem_requirement, obs_dim, memory_size, alpha, n_step, gamma, entropy_alpha)
 
 agent.add_new_goal(tuple(goal_encodings[recipes[0]]))
 agent.switch_active_goal(tuple(goal_encodings[recipes[0]]))
@@ -81,8 +83,11 @@ agent_save_string = f"soft_agent{idx}_9x9_tomato_salad_test.pickle"
 # train
 agents = {"player_0": agent}
 # gather_human_examples(agent, env, max_num_timesteps, 15)
-# with
-gather_expert_examples(agent, env, max_num_timesteps, 15)
+with open(r"agents/ppo_agent", "rb") as output_file:
+    expert = pickle.load(output_file)
+
+gather_expert_examples(expert, agent, env, 500)
+
 train(agents, env, num_frames, agent_save_string, agent_dir, checkpoint_save=50000, evalpy_config=evalpy_config)
 
 with open(f'{agent_dir}{agent_save_string}', "wb") as output_file:

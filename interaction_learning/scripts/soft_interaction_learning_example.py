@@ -35,7 +35,7 @@ n_agents = 1
 num_humans = 0
 render = False
 
-level = 'open_room_interaction2'
+level = 'open_room_salad'  # 'open_room_interaction2'
 record = False
 max_num_timesteps = 100
 
@@ -64,9 +64,10 @@ gamma = 0.99
 # PER parameters
 alpha = 0.2
 n_step = 3
+entropy_alpha = 3.2
 
 agent = SoftInteractionAgent(tom_model, impact_model, obs_space, action_space, batch_size, target_update,
-                             initial_mem_requirement, obs_dim, memory_size, alpha, n_step, gamma)
+                             initial_mem_requirement, obs_dim, memory_size, alpha, n_step, gamma, entropy_alpha)
 
 agent.add_new_goal(tuple(goal_encodings[recipes[0]]))
 agent.switch_active_goal(tuple(goal_encodings[recipes[0]]))
@@ -77,7 +78,7 @@ agent.is_test = False
 evalpy_config = {"project_path": "./", "project_folder": "test_logs/", "experiment_name": "cooking_tomato_soft_example"}
 agent_dir = "agents/"
 idx = 0
-agent_save_string = f"soft_agent{idx}_9x9_tomato_salad_test.pickle"
+agent_save_string = f"soft_agent{idx}_7x7_tomato_salad_test.pickle"
 # train
 agents = {"player_0": agent}
 train(agents, env, num_frames, agent_save_string, agent_dir, checkpoint_save=50000, evalpy_config=evalpy_config)
