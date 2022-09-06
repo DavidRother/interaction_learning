@@ -13,8 +13,8 @@ from interaction_learning.algorithms.soft_dqn.soft_dqn_utils import Memory, Soft
 device = torch.device("cpu")
 
 env = gym.make('CartPole-v0')
-onlineQNetwork = SoftQNetwork(device).to(device)
-targetQNetwork = SoftQNetwork(device).to(device)
+onlineQNetwork = SoftQNetwork(env.observation_space.shape[0], env.action_space.n, 4.0, device="cpu").to(device)
+targetQNetwork = SoftQNetwork(env.observation_space.shape[0], env.action_space.n, 4.0, device="cpu").to(device)
 targetQNetwork.load_state_dict(onlineQNetwork.state_dict())
 
 optimizer = torch.optim.Adam(onlineQNetwork.parameters(), lr=1e-4)

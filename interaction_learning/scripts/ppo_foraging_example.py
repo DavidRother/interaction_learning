@@ -32,7 +32,7 @@ obs_space, action_space = env.observation_spaces["player_0"], env.action_spaces[
 obs_dim = obs_space.shape[0]
 
 num_agents = 1
-training_iterations = 100000
+training_iterations = 1000
 training_steps = 400
 num_batches = 1
 num_epochs = 4
@@ -43,7 +43,7 @@ agent_1_config = {"prosocial_level": 0.0, "update_prosocial_level": False, "use_
 agent_configs = {"player_0": agent_1_config}
 
 # initialize agents
-agents = {f"player_{idx}": ForagingModel() for idx in range(num_agents)}
+agents = {f"player_{idx}": ForagingModel(obs_dim, action_space.n) for idx in range(num_agents)}
 optimizer = {f"player_{idx}": optim.Adam(agents[f"player_{idx}"].parameters(), lr=lr) for idx in range(num_agents)}
 
 
@@ -71,8 +71,8 @@ for training_iteration in range(training_iterations):
     buffer.reset()
 
     if (training_iteration % 50000) == 49999:
-        with open(f'agents/ppo_agent_checkpoint_{training_iteration}.pickle', "wb") as output_file:
+        with open(f'agents/ppo_foraging_checkpoint_{training_iteration}.pickle', "wb") as output_file:
             pickle.dump(agents["player_0"], output_file)
 
-with open(f'agents/ppo_agent_tomato_lettuce_salad.pickle', "wb") as output_file:
+with open(f'agents/ppo_foraging.pickle', "wb") as output_file:
     pickle.dump(agents["player_0"], output_file)
