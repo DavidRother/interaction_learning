@@ -2,34 +2,31 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import torch.optim as optim
 import pickle
-from gym_cooking.environment import cooking_zoo
-from gym_cooking.cooking_book.recipe_drawer import RECIPES
+from lbforaging.foraging import zoo_environment
 from interaction_learning.utils.episode import collect_experience
 from interaction_learning.algorithms.ppo.buffer import MultiAgentBuffer, REWARDS
 from interaction_learning.algorithms.ppo.postprocessing import postprocess
 from interaction_learning.algorithms.ppo.ppo_loss import ppo_surrogate_loss
-from interaction_learning.agents.cooking_model import CookingModel
+from interaction_learning.agents.foraging_model_ppo import ForagingModel
 
 
 # environment
-n_agents = 1
-num_humans = 0
-render = False
+players = 1
+max_player_level = 3
+field_size = (8, 8)
+max_food = 2
+sight = 8
+max_episode_steps = 50
+force_coop = False
+normalize_reward = True
+grid_observation = False
+penalty = 0.0
 
-level = 'open_room_interaction2'
-record = False
-max_num_timesteps = 100
-
-goal_encodings = {name: recipe().goal_encoding for name, recipe in RECIPES.items()}
-
-recipes_to_learn = ["TomatoLettuceSalad", "CarrotBanana", "CucumberOnion", "AppleWatermelon"]
-recipes = ["CarrotBanana"]
-action_scheme = "scheme3"
-
-env_id = "CookingZoo-v0"
-env = cooking_zoo.parallel_env(level=level, num_agents=n_agents, record=record, max_steps=max_num_timesteps,
-                               recipes=recipes, action_scheme=action_scheme, obs_spaces=["feature_vector"],
-                               ghost_agents=1)
+# env = gym.make("Foraging-8x8-2p-2f-v2")
+env = zoo_environment.parallel_env(players=players, max_player_level=max_player_level, field_size=field_size,
+                                   max_food=max_food, sight=sight, max_episode_steps=max_episode_steps,
+                                   force_coop=force_coop, normalize_reward=normalize_reward,
+                                   grid_observation=grid_observation, penalty=penalty)
 
 obs_space, action_space = env.observation_spaces["player_0"], env.action_spaces["player_0"]
 obs_dim = obs_space.shape[0]
@@ -46,7 +43,7 @@ agent_1_config = {"prosocial_level": 0.0, "update_prosocial_level": False, "use_
 agent_configs = {"player_0": agent_1_config}
 
 # initialize agents
-agents = {f"player_{idx}": CookingModel(obs_dim, action_space.n) for idx in range(num_agents)}
+agents = {f"player_{idx}": ForagingModel() for idx in range(num_agents)}
 optimizer = {f"player_{idx}": optim.Adam(agents[f"player_{idx}"].parameters(), lr=lr) for idx in range(num_agents)}
 
 
