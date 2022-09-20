@@ -1,28 +1,23 @@
 from ray.rllib.algorithms.sac import SAC
 from ray.tune.registry import register_env
-from gym_cooking.environment.environment import GymCookingEnvironment
-
-n_agents = 1
-num_humans = 1
-render = False
-
-level = 'open_room_interaction2'
-seed = 1
-record = False
-max_num_timesteps = 100
-recipe = "CarrotBanana"
-action_scheme = "scheme3"
-
+from lbforaging.foraging import environment
 
 env_config = {
-    "level": level, "record": record, "max_steps": max_num_timesteps,
-    "recipe": recipe, "action_scheme": action_scheme, "obs_spaces": ["feature_vector"],
-    "ghost_agents": 1
+    "players": 1,
+    "max_player_level": 3,
+    "field_size": (8, 8),
+    "max_food": 2,
+    "sight": 8,
+    "max_episode_steps": 50,
+    "force_coop": False,
+    "normalize_reward": True,
+    "grid_observation": False,
+    "penalty": 0.0,
 }
 
 
 def env_creator(env_conf):
-    return GymCookingEnvironment(**env_config)  # return an env instance
+    return environment.ForagingEnv(**env_config)  # return an env instance
 
 
 register_env("my_env", env_creator)
@@ -42,7 +37,7 @@ config = {
 
 algo = SAC(config=config)
 
-for _ in range(10000):
+for _ in range(1000):
     stuff = algo.train()
     interest_keys = ["episode_reward_max", "episode_reward_min", "episode_reward_mean", "episode_len_mean",
                      "episodes_this_iter", "episodes_total", "num_agent_steps_sampled"]
