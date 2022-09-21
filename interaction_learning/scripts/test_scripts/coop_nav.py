@@ -1,0 +1,60 @@
+import interaction_learning.environments.multiagent_particle_envs.make_env as make_env
+import numpy as np
+import json
+
+from interaction_learning.environments.multiagent_particle_envs.multiagent.environment import MultiAgentEnv
+import interaction_learning.environments.multiagent_particle_envs.multiagent.scenarios as scenarios
+from interaction_learning.configs.scenario_configs import single_agent_multi_goal
+
+np.set_printoptions(precision=2, suppress=True)
+
+# with open('../../alg/cooperative_navigation_stage2_antipodal.json') as f:
+#     config = json.load(f)
+# n_agents = 4
+
+config = single_agent_multi_goal
+n_agents = config.n_agents
+
+scenario = scenarios.load(config.scenario_name).Scenario()
+world = scenario.make_world(config.n_agents, config._asdict(), 0.2)
+env = MultiAgentEnv(world, scenario.reset_world, scenario.reward, scenario.observation, None, scenario.done,
+                    max_steps=25)
+
+act_space = env.action_space
+obs_space = env.observation_space
+
+print("Landmark locations")
+for i, landmark in enumerate(env.world.landmarks):
+    print("Landmark", i, landmark.state.p_pos)
+print("Agent locations")
+for i, agent in enumerate(env.world.agents):
+    print("Agent", i, agent.state.p_pos)
+
+for episode in range(10):
+
+    print("Episode", episode)
+    global_state, local_others, local_self, done, landmarks_claimed = env.reset()
+    env.render()
+    print("Goals")
+    for idx in range(n_agents):
+        print(env.world.landmarks[idx].state.p_pos)
+    print(global_state)
+    print(local_others)
+    print(local_self)
+    print(done)
+
+    while not done:
+        l = input("Enter actions as a comma-separated string: ")
+        actions = list(map(int, l.split(',')))
+        # print(actions)
+        # s,r,d,i = env.step(actions)
+        next_global_state, next_local_others, next_local_self, reward, local_rewards, done = env.step(actions)
+        env.render()
+        print("Next global state", next_global_state)
+        print("Next local others", next_local_others)
+        print("Next local self", next_local_self)
+        print("Reward", reward)
+        print("Local rewards", local_rewards)
+        print("Done", done)
+
+    print("Number of collisions", scenario.collisions / 2)
