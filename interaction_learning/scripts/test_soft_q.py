@@ -8,21 +8,31 @@ from torch.distributions import Categorical
 import gym
 import numpy as np
 from interaction_learning.algorithms.soft_dqn.soft_dqn_utils import Memory, SoftQNetwork
+from partigames.environment.gym_env import GymPartiEnvironment
 
 
 device = torch.device("cpu")
 
-env = gym.make('CartPole-v0')
-onlineQNetwork = SoftQNetwork(env.observation_space.shape[0], env.action_space.n, 4.0, device="cpu").to(device)
-targetQNetwork = SoftQNetwork(env.observation_space.shape[0], env.action_space.n, 4.0, device="cpu").to(device)
+agent_position_generator = lambda: [np.asarray([0.05, 0.5])]
+agent_reward = ["x"]
+max_steps = 1000
+ghost_agents = 0
+render = True
+
+alpha = 4.0
+
+env = GymPartiEnvironment(agent_position_generator=agent_position_generator, agent_reward=agent_reward,
+                          max_steps=max_steps, ghost_agents=ghost_agents, render=render)
+onlineQNetwork = SoftQNetwork(env.observation_space.shape[0], env.action_space.n, alpha, device="cpu").to(device)
+targetQNetwork = SoftQNetwork(env.observation_space.shape[0], env.action_space.n, alpha, device="cpu").to(device)
 targetQNetwork.load_state_dict(onlineQNetwork.state_dict())
 
-optimizer = torch.optim.Adam(onlineQNetwork.parameters(), lr=1e-4)
+optimizer = torch.optim.Adam(onlineQNetwork.parameters(), lr=1e-5)
 
 GAMMA = 0.99
 REPLAY_MEMORY = 50000
-BATCH = 16
-UPDATE_STEPS = 4
+BATCH = 32
+UPDATE_STEPS = 500
 
 memory_replay = Memory(REPLAY_MEMORY)
 
@@ -39,7 +49,7 @@ for epoch in count():
         episode_reward += reward
         memory_replay.add((state, next_state, action, reward, done))
 
-        if memory_replay.size() > 128:
+        if memory_replay.size() > 10000:
             if begin_learn is False:
                 print('learn begin!')
                 begin_learn = True
@@ -61,6 +71,8 @@ for epoch in count():
                 y = batch_reward + (1 - batch_done) * GAMMA * next_v
 
             loss = F.mse_loss(onlineQNetwork(batch_state).gather(1, batch_action.long()), y)
+            if torch.isinf(loss).any().cpu().item():
+                print("hi")
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()

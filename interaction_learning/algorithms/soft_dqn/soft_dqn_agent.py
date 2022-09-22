@@ -27,6 +27,7 @@ class SoftDQNAgent:
 
         self.optimizer = torch.optim.Adam(self.soft_dqn.parameters(), lr=1e-4)
 
+        self.alpha = alpha
         self.beta = beta
         self.prior_eps = prior_eps
         # mode: train / test
@@ -41,7 +42,7 @@ class SoftDQNAgent:
         weights = torch.FloatTensor(samples["weights"].reshape(-1, 1)).to(self.device)
         indices = samples["indices"]
 
-        elementwise_loss = self._compute_loss(samples, self.gamma)
+        elementwise_loss = self._compute_loss(samples, self.gamma, self.alpha)
 
         # PER: importance sampling before average
         loss = torch.mean(elementwise_loss * weights)
@@ -49,7 +50,7 @@ class SoftDQNAgent:
         if n_step_memory:
             gamma = self.gamma ** n_step
             samples = n_step_memory.sample_batch_from_idxs(indices)
-            elementwise_loss_n_loss = self._compute_loss(samples, gamma)
+            elementwise_loss_n_loss = self._compute_loss(samples, gamma, self.alpha)
             elementwise_loss += elementwise_loss_n_loss
 
             # PER: importance sampling before average
