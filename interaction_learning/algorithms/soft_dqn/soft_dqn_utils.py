@@ -63,7 +63,7 @@ class SoftQNetwork(nn.Module):
         v = self.alpha * torch.log(torch.sum(torch.exp(q_value / self.alpha), dim=1, keepdim=True))
         return v
 
-    def select_action(self, state):
+    def select_action(self, state, greedy=False):
         state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         # print('state : ', state)
         with torch.no_grad():
@@ -73,7 +73,10 @@ class SoftQNetwork(nn.Module):
             dist = torch.exp((q - v) / self.alpha)
             # print(dist)
             dist = dist / torch.sum(dist)
-            # print(dist)
-            c = Categorical(dist)
-            a = c.sample()
+            if greedy:
+                a = np.argmax(dist)
+            else:
+                # print(dist)
+                c = Categorical(dist)
+                a = c.sample()
         return a.item()
