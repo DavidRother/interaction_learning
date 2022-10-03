@@ -8,30 +8,41 @@ from torch.distributions import Categorical
 import gym
 import numpy as np
 from interaction_learning.algorithms.soft_dqn.soft_dqn_utils import Memory, SoftQNetwork
-from partigames.environment.gym_env import GymPartiEnvironment
+from partigames.environment.zoo_env import parallel_env
 import matplotlib.pyplot as plt
+from time import sleep
 
 
 device = torch.device("cpu")
 
 # 0 is do nothing 1 is move right 2 is down 3 is left 4 is up
 
-agent_position_generator = lambda: [np.asarray([0.05, np.random.uniform(0, 1)])]
-agent_reward = "x"
+agent_position_generator = lambda: [np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)]),
+                                    np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)])]
+agent_reward = ["y0d", ""]
 max_steps = 1000
-ghost_agents = 1
-render = True
+ghost_agents = 0
+render = False
+num_agents = 2
 
-alpha = 0.08
-
-env = GymPartiEnvironment(agent_position_generator=agent_position_generator, agent_reward=agent_reward,
-                          max_steps=max_steps, ghost_agents=ghost_agents, render=render)
+env = parallel_env(num_agents=num_agents, agent_position_generator=agent_position_generator, agent_reward=agent_reward,
+                   max_steps=max_steps, ghost_agents=ghost_agents, render=render)
 # temperature = torch.Tensor(alpha)
-onlineQNetwork = SoftQNetwork(env.observation_space.shape[0], env.action_space.n, alpha, device="cpu").to(device)
-targetQNetwork = SoftQNetwork(env.observation_space.shape[0], env.action_space.n, alpha, device="cpu").to(device)
-targetQNetwork.load_state_dict(onlineQNetwork.state_dict())
+alpha = 0.1
+onlineQNetwork = SoftQNetwork(env.observation_spaces["player_0"].shape[0], env.action_spaces["player_0"].n,
+                              alpha, device="cpu").to(device)
 
-optimizer = torch.optim.Adam(onlineQNetwork.parameters(), lr=1e-4)
+onlineQNetwork.load_state_dict(torch.load("agent/sql_final_policy_y0d"))
+
+agent2net = SoftQNetwork(env.observation_spaces["player_1"].shape[0], env.action_spaces["player_1"].n,
+                         alpha, device="cpu").to(device)
+
+impact_net = SoftQNetwork(env.observation_spaces["player_0"].shape[0], env.action_spaces["player_0"].n,
+                          alpha, device="cpu").to(device)
+
+impact_optimizer = torch.optim.Adam(impact_net.parameters(), lr=1e-4)
+
+agent2net.load_state_dict(torch.load("agent/sql490policy"))
 # entropy_optimizer = torch.optim.Adam(temperature, lr=1e-4)
 
 GAMMA = 0.80
@@ -45,7 +56,7 @@ learn_steps = 0
 begin_learn = False
 episode_reward = 0
 
-action_distribution = {n: 0 for n in range(env.action_space.n)}
+action_distribution = {n: 0 for n in range(env.action_spaces["player_0"].n)}
 action_dists = []
 
 episode_rewards = []
@@ -53,15 +64,18 @@ average_q = []
 
 action_bag = []
 
-for epoch in range(500):
+for epoch in range(200):
     state = env.reset()
     episode_reward = 0
     for time_steps in range(max_steps):
-        action = onlineQNetwork.select_action(state)
+        action = onlineQNetwork.select_action(state["player_0"])
         action_bag.append(action)
-        next_state, reward, done, _ = env.step(action)
-        episode_reward += reward
-        memory_replay.add((state, next_state, action, reward, done))
+        action_2 = impact_net.select_action(state["player_1"])
+        actions = {"player_0": action, "player_1": action_2}
+        next_state, reward, done, _ = env.step(actions)
+        episode_reward += reward["player_0"]
+
+        memory_replay.add((state["player_0"], next_state["player_0"], action_2, reward["player_0"], done["player_0"]))
 
         action_distribution[action] += 1
 
@@ -70,8 +84,6 @@ for epoch in range(500):
                 print('learning begins!')
                 begin_learn = True
             learn_steps += 1
-            if learn_steps % UPDATE_STEPS == 0:
-                targetQNetwork.load_state_dict(onlineQNetwork.state_dict())
             batch = memory_replay.sample(BATCH, False)
             batch_state, batch_next_state, batch_action, batch_reward, batch_done = zip(*batch)
 
@@ -82,36 +94,40 @@ for epoch in range(500):
             batch_done = torch.FloatTensor(np.asarray(batch_done)).unsqueeze(1).to(device)
 
             with torch.no_grad():
-                next_q = targetQNetwork(batch_next_state)
-                next_v = targetQNetwork.get_value(next_q)
-                y = batch_reward + (1 - batch_done) * GAMMA * next_v
+                current_q = onlineQNetwork(batch_state)
+                next_q = onlineQNetwork(batch_next_state)
+                y = next_q - (current_q + GAMMA * batch_reward)
+                delta = next_q - current_q
 
-                average_q.append(torch.mean(next_q).cpu().item())
+                average_q.append(torch.mean(delta).cpu().item())
 
-            loss = F.mse_loss(onlineQNetwork(batch_state).gather(1, batch_action.long()), y)
+            loss = F.mse_loss(impact_net(batch_state).gather(1, batch_action.long()), y)
             if torch.isinf(loss).any().cpu().item():
                 print("hi")
-            optimizer.zero_grad()
+            impact_optimizer.zero_grad()
             loss.backward()
-            optimizer.step()
+            impact_optimizer.step()
 
             # temperature_loss = 0
 
-        if done:
+        if done["player_0"]:
             dist = np.asarray(list(action_distribution.values())) / sum(action_distribution.values())
             action_dists.append(dist)
             print(f"Action  Dsitribution: {dist}")
-            action_distribution = {n: 0 for n in range(env.action_space.n)}
+            action_distribution = {n: 0 for n in range(env.action_spaces["player_0"].n)}
             break
 
         state = next_state
-    if episode_reward > 0.0:
+        if render:
+            env.render(mode="human")
+            sleep(0.1)
+    if episode_reward >= 0:
         print(f"Reward higher than anticipated: {action_bag}")
     action_bag = []
     print(episode_reward)
     episode_rewards.append(episode_reward)
     if epoch % 10 == 0:
-        torch.save(onlineQNetwork.state_dict(), f'sql{epoch}policy')
+        torch.save(onlineQNetwork.state_dict(), f'agent/sql{epoch}policy_y0dimpact')
         print('Epoch {}\tMoving average score: {:.2f}\t'.format(epoch, episode_reward))
 
 plt.figure(1)
