@@ -6,7 +6,7 @@ from interaction_learning.algorithms.rainbow.agent import DQNAgent
 class InteractionAgent:
 
     def __init__(self, tom_model, impact_model, obs_space, action_space, batch_size, target_update,
-                 initial_mem_requirement, obs_dim, memory_size, alpha, n_step, gamma):
+                 initial_mem_requirement, obs_dim, memory_size, alpha, gamma):
         self.agents = {}
         self.tom_model = tom_model
         self.impact_model = impact_model
@@ -26,11 +26,6 @@ class InteractionAgent:
             obs_dim, memory_size, batch_size, alpha=alpha
         )
 
-        # memory for N-step Learning
-        self.use_n_step = True if n_step > 1 else False
-        if self.use_n_step:
-            self.n_step = n_step
-            self.memory_n = ReplayBuffer(obs_dim, memory_size, batch_size, n_step=n_step, gamma=gamma)
         self.training_required = False
         self.current_goal = None
         self.is_test = False

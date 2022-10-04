@@ -37,8 +37,13 @@ onlineQNetwork.load_state_dict(torch.load("agent/sql_final_policy_y0d"))
 agent2net = SoftQNetwork(env.observation_spaces["player_1"].shape[0], env.action_spaces["player_1"].n,
                          alpha, device="cpu").to(device)
 
+impact_alpha = 0.3
 impact_net = SoftQNetwork(env.observation_spaces["player_0"].shape[0], env.action_spaces["player_0"].n,
-                          alpha, device="cpu").to(device)
+                          impact_alpha, device="cpu").to(device)
+target_impact_net = SoftQNetwork(env.observation_spaces["player_0"].shape[0], env.action_spaces["player_0"].n,
+                                 impact_alpha, device="cpu").to(device)
+
+target_impact_net.load_state_dict(impact_net.state_dict())
 
 impact_optimizer = torch.optim.Adam(impact_net.parameters(), lr=1e-4)
 
@@ -64,7 +69,7 @@ average_q = []
 
 action_bag = []
 
-for epoch in range(200):
+for epoch in range(400):
     state = env.reset()
     episode_reward = 0
     for time_steps in range(max_steps):
@@ -84,6 +89,9 @@ for epoch in range(200):
                 print('learning begins!')
                 begin_learn = True
             learn_steps += 1
+            if learn_steps % UPDATE_STEPS == 0:
+                target_impact_net.load_state_dict(impact_net.state_dict())
+
             batch = memory_replay.sample(BATCH, False)
             batch_state, batch_next_state, batch_action, batch_reward, batch_done = zip(*batch)
 
@@ -95,11 +103,16 @@ for epoch in range(200):
 
             with torch.no_grad():
                 current_q = onlineQNetwork(batch_state)
+                current_v = onlineQNetwork.get_value(current_q)
                 next_q = onlineQNetwork(batch_next_state)
-                y = next_q - (current_q + GAMMA * batch_reward)
-                delta = next_q - current_q
+                next_v = onlineQNetwork.get_value(next_q)
+                future_impact_q = impact_net(batch_next_state)
+                future_impact_value = impact_net.get_value(future_impact_q)
+                r = next_v + batch_reward - current_v
+                y = r + (1 - batch_done) * GAMMA * future_impact_value
+                delta = current_v - next_v
 
-                average_q.append(torch.mean(delta).cpu().item())
+                average_q.append(torch.mean(future_impact_q).cpu().item())
 
             loss = F.mse_loss(impact_net(batch_state).gather(1, batch_action.long()), y)
             if torch.isinf(loss).any().cpu().item():
@@ -113,7 +126,7 @@ for epoch in range(200):
         if done["player_0"]:
             dist = np.asarray(list(action_distribution.values())) / sum(action_distribution.values())
             action_dists.append(dist)
-            print(f"Action  Dsitribution: {dist}")
+            print(f"Action  Distribution: {dist}")
             action_distribution = {n: 0 for n in range(env.action_spaces["player_0"].n)}
             break
 
@@ -127,8 +140,9 @@ for epoch in range(200):
     print(episode_reward)
     episode_rewards.append(episode_reward)
     if epoch % 10 == 0:
-        torch.save(onlineQNetwork.state_dict(), f'agent/sql{epoch}policy_y0dimpact')
+        # torch.save(onlineQNetwork.state_dict(), f'agent/sql{epoch}policy_y0dimpact')
         print('Epoch {}\tMoving average score: {:.2f}\t'.format(epoch, episode_reward))
+torch.save(impact_net.state_dict(), f'agent/sql_final_policy_y0d_impact')
 
 plt.figure(1)
 plt.plot(episode_rewards)

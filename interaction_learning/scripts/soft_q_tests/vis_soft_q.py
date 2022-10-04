@@ -49,5 +49,7 @@ for epoch in range(1):
         if done:
             break
 
+        state = next_state
+
     print(episode_reward)
 

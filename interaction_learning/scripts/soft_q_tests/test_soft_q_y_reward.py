@@ -17,7 +17,7 @@ device = torch.device("cpu")
 # 0 is do nothing 1 is move right 2 is down 3 is left 4 is up
 
 agent_position_generator = lambda: [np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)])]
-for num in range(5):
+for num in range(1):
     agent_reward = f"y{num}d"
     max_steps = 1000
     ghost_agents = 1
@@ -115,17 +115,17 @@ for num in range(5):
             # torch.save(onlineQNetwork.state_dict(), f'sql{epoch}policy_y0')
             print('Epoch {}\tMoving average score: {:.2f}\t'.format(epoch, episode_reward))
 
-    torch.save(onlineQNetwork.state_dict(), f'sql_final_policy_y{num}d')
+    torch.save(onlineQNetwork.state_dict(), f'agent/sql_final_policy_y{num}d_test_gym')
 
-    # plt.figure(1)
-    # plt.plot(episode_rewards)
-    #
-    # plt.figure(2)
-    # plt.plot(action_dists)
-    # plt.legend(["NO OP", "RIGHT", "DOWN", "LEFT", "UP"])
-    #
-    # plt.figure(3)
-    # plt.plot(average_q)
-    # plt.title("Average encountered Q value in training")
-    #
-    # plt.show()
+    plt.figure(1)
+    plt.plot(episode_rewards)
+
+    plt.figure(2)
+    plt.plot(action_dists)
+    plt.legend(["NO OP", "RIGHT", "DOWN", "LEFT", "UP"])
+
+    plt.figure(3)
+    plt.plot(average_q)
+    plt.title("Average encountered Q value in training")
+
+    plt.show()
