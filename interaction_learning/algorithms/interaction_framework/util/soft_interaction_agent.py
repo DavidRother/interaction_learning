@@ -11,8 +11,8 @@ class SoftInteractionAgent:
         self.n_actions = n_actions
         self.alpha = alpha
         self.device = device
-        self.model = SoftQNetwork(self.obs_dim, self.n_actions, self.alpha, device=self.device).to(self.device)
-        self.target_model = SoftQNetwork(self.obs_dim, self.n_actions, self.alpha, device=self.device).to(self.device)
+        self.model = SoftQNetwork(self.obs_dim * 2, self.n_actions, self.alpha, device=self.device).to(self.device)
+        self.target_model = SoftQNetwork(self.obs_dim * 2, self.n_actions, self.alpha, device=self.device).to(self.device)
         self.target_model.load_state_dict(self.model.state_dict())
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-4)
 
@@ -21,7 +21,7 @@ class SoftInteractionAgent:
         self.gamma = gamma
         self.target_update_interval = target_update_interval
 
-    def learn(self, memory, other_agent_num, other_agent_model):
+    def learn(self, memory, other_agent_num, self_agent_num, other_agent_model):
         if self.learn_steps % self.target_update_interval == 0:
             self.target_model.load_state_dict(self.model.state_dict())
         batch = memory.sample(self.batch_size, False)
@@ -33,17 +33,21 @@ class SoftInteractionAgent:
         batch_reward = torch.FloatTensor(np.asarray(batch_reward)).unsqueeze(1).to(self.device)
         batch_done = torch.FloatTensor(np.asarray(batch_done)).unsqueeze(1).to(self.device)
 
+        other_agent_batch_state = self.transform_state_pov(batch_state, self_agent_num, other_agent_num)
+        other_agent_next_batch_state = self.transform_state_pov(batch_next_state, self_agent_num, other_agent_num)
+
         with torch.no_grad():
-            current_q = other_agent_model.get_q(batch_state)
+            current_q = other_agent_model.get_q(other_agent_batch_state)
             current_v = other_agent_model.get_value(current_q)
-            next_q = other_agent_model.get_q(batch_next_state)
+            next_q = other_agent_model.get_q(other_agent_next_batch_state)
             next_v = other_agent_model.get_value(next_q)
             future_impact_q = self.model(batch_next_state)
             future_impact_value = self.model.get_value(future_impact_q)
             r = next_v + batch_reward - current_v
             y = r + (1 - batch_done) * self.gamma * future_impact_value
 
-        loss = F.mse_loss(self.model(batch_state).gather(1, batch_action.long()), y)
+        impact_batch_state = torch.cat([batch_state, other_agent_batch_state], dim=1)
+        loss = F.mse_loss(self.model(impact_batch_state).gather(1, batch_action.long()), y)
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
@@ -51,13 +55,24 @@ class SoftInteractionAgent:
         self.learn_steps += 1
         return loss.cpu().item()
 
-    def select_action(self, state):
-        return self.model.select_action(state)
+    def select_action(self, state, self_agent_num, other_agent_num):
+        self_state = state
+        other_state = self.transform_state_pov(state, self_agent_num, other_agent_num)
+        impact_state = torch.cat([self_state, other_state], dim=1)
+        return self.model.select_action(impact_state)
 
     def get_q(self, state):
         return self.model(state)
 
     def get_v(self, q):
         return self.model.get_value(q)
+
+    @staticmethod
+    def transform_state_pov(batch_state, self_agent_num, other_agent_num):
+        total_num = batch_state.shape[1]
+        column_order = list(range(other_agent_num * 4, other_agent_num * 4 + 4)) + list(range(4, total_num))
+        column_order[self_agent_num * 4:self_agent_num * 4 + 4] = list(range(4))
+        new_batch_state = torch.index_select(batch_state, 1, torch.LongTensor(column_order))
+        return new_batch_state
 
 

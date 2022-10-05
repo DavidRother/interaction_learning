@@ -1,4 +1,5 @@
 from interaction_learning.algorithms.interaction_framework.particle_interaction_agent import ParticleInteractionAgent
+from interaction_learning.core.evaluation import evaluate
 from partigames.environment.zoo_env import parallel_env
 import matplotlib.pyplot as plt
 from time import sleep
@@ -36,6 +37,7 @@ interaction_agent.add_task("tx")
 interaction_agent.switch_active_tasks(["tx"])
 
 episode_reward = 0
+num_eval_runs = 100
 
 action_distribution = {n: 0 for n in range(env.action_spaces["player_0"].n)}
 action_dists = []
@@ -44,6 +46,8 @@ episode_rewards = []
 average_q = []
 
 action_bag = []
+
+evaluation_scores = [evaluate(env, 10, [interaction_agent])]
 
 for epoch in range(400):
     state = env.reset()
@@ -79,10 +83,13 @@ for epoch in range(400):
     print(episode_reward)
     episode_rewards.append(episode_reward)
     if epoch % 10 == 0:
+        evaluation_scores.append(evaluate(env, 10, [interaction_agent]))
         # torch.save(onlineQNetwork.state_dict(), f'agent/sql{epoch}policy_y0dimpact')
         print('Epoch {}\tMoving average score: {:.2f}\t'.format(epoch, episode_reward))
 
 interaction_agent.save_agent("interaction_agents/task_x.agent")
+
+plt.style.use("ggplot")
 
 plt.figure(1)
 plt.plot(episode_rewards)
@@ -90,5 +97,24 @@ plt.plot(episode_rewards)
 plt.figure(2)
 plt.plot(action_dists)
 plt.legend(["NO OP", "RIGHT", "DOWN", "LEFT", "UP"])
+
+eval_mean = []
+eval_std = []
+
+for eval_scores in evaluation_scores:
+
+    eval_mean.append(np.mean([evaluations["player_0"] for evaluations in eval_scores]))
+    eval_std.append(np.std([evaluations["player_0"] for evaluations in eval_scores]))
+
+eval_mean = np.asarray(eval_mean)
+eval_std = np.asarray(eval_std)
+
+plt.figure(3)
+plt.plot(eval_mean)
+plt.fill_between(list(range(len(eval_std))), eval_mean + eval_std, eval_mean - eval_std, alpha=0.5)
+plt.title("Evaluation Scores during training")
+plt.xlabel("Evaluation Epoch (each 10th Training Episode)")
+plt.ylabel("Reward")
+
 
 plt.show()
