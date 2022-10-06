@@ -13,6 +13,18 @@ import matplotlib.pyplot as plt
 from time import sleep
 
 
+def transform_state_pov(i_batch_state, self_agent_num, other_agent_num):
+    if isinstance(batch_state, np.ndarray):
+        i_batch_state = torch.FloatTensor(batch_state).unsqueeze(0).to("cpu")
+    total_num = i_batch_state.shape[1]
+    oa_idx_inc = int(other_agent_num < self_agent_num)
+    column_order = list(range((other_agent_num + oa_idx_inc) * 4, (other_agent_num + oa_idx_inc) * 4 + 4)) + list(range(4, total_num))
+    idx_inc = int(self_agent_num < other_agent_num)
+    column_order[(self_agent_num + idx_inc) * 4:(self_agent_num + idx_inc) * 4 + 4] = list(range(4))
+    new_batch_state = torch.index_select(i_batch_state, 1, torch.LongTensor(column_order))
+    return new_batch_state
+
+
 device = torch.device("cpu")
 
 # 0 is do nothing 1 is move right 2 is down 3 is left 4 is up
@@ -34,20 +46,16 @@ onlineQNetwork = SoftQNetwork(env.observation_spaces["player_0"].shape[0], env.a
 
 onlineQNetwork.load_state_dict(torch.load("agent/sql_final_policy_y0d"))
 
-agent2net = SoftQNetwork(env.observation_spaces["player_1"].shape[0], env.action_spaces["player_1"].n,
-                         alpha, device="cpu").to(device)
-
 impact_alpha = 0.3
-impact_net = SoftQNetwork(env.observation_spaces["player_0"].shape[0], env.action_spaces["player_0"].n,
+impact_net = SoftQNetwork(env.observation_spaces["player_0"].shape[0] * 2, env.action_spaces["player_0"].n,
                           impact_alpha, device="cpu").to(device)
-target_impact_net = SoftQNetwork(env.observation_spaces["player_0"].shape[0], env.action_spaces["player_0"].n,
+target_impact_net = SoftQNetwork(env.observation_spaces["player_0"].shape[0] * 2, env.action_spaces["player_0"].n,
                                  impact_alpha, device="cpu").to(device)
 
 target_impact_net.load_state_dict(impact_net.state_dict())
 
 impact_optimizer = torch.optim.Adam(impact_net.parameters(), lr=1e-4)
 
-agent2net.load_state_dict(torch.load("agent/sql490policy"))
 # entropy_optimizer = torch.optim.Adam(temperature, lr=1e-4)
 
 GAMMA = 0.80
@@ -69,18 +77,19 @@ average_q = []
 
 action_bag = []
 
-for epoch in range(400):
+for epoch in range(100):
     state = env.reset()
     episode_reward = 0
     for time_steps in range(max_steps):
         action = onlineQNetwork.select_action(state["player_0"])
         action_bag.append(action)
-        action_2 = impact_net.select_action(state["player_1"])
+        torch_state = torch.cat([torch.Tensor(state["player_1"]).unsqueeze(0), torch.Tensor(state["player_0"]).unsqueeze(0)], dim=1)
+        action_2 = impact_net.select_action(torch_state)
         actions = {"player_0": action, "player_1": action_2}
         next_state, reward, done, _ = env.step(actions)
         episode_reward += reward["player_0"]
 
-        memory_replay.add((state["player_0"], next_state["player_0"], action_2, reward["player_0"], done["player_0"]))
+        memory_replay.add((state["player_1"], next_state["player_1"], action_2, reward["player_0"], done["player_1"]))
 
         action_distribution[action] += 1
 
@@ -102,19 +111,26 @@ for epoch in range(400):
             batch_done = torch.FloatTensor(np.asarray(batch_done)).unsqueeze(1).to(device)
 
             with torch.no_grad():
-                current_q = onlineQNetwork(batch_state)
+
+                oa_batch_state = transform_state_pov(batch_state, 1, 0)
+                oa_batch_next_state = transform_state_pov(batch_next_state, 1, 0)
+
+                current_q = onlineQNetwork(oa_batch_state)
                 current_v = onlineQNetwork.get_value(current_q)
-                next_q = onlineQNetwork(batch_next_state)
+                next_q = onlineQNetwork(oa_batch_next_state)
                 next_v = onlineQNetwork.get_value(next_q)
-                future_impact_q = impact_net(batch_next_state)
-                future_impact_value = impact_net.get_value(future_impact_q)
+
+                impact_batch_next_state = torch.cat([batch_next_state, oa_batch_next_state], dim=1)
+                future_impact_q = target_impact_net(impact_batch_next_state)
+                future_impact_value = target_impact_net.get_value(future_impact_q)
                 r = next_v + batch_reward - current_v
                 y = r + (1 - batch_done) * GAMMA * future_impact_value
                 delta = current_v - next_v
 
-                average_q.append(torch.mean(future_impact_q).cpu().item())
+                average_q.append(torch.mean(r).cpu().item())
 
-            loss = F.mse_loss(impact_net(batch_state).gather(1, batch_action.long()), y)
+            impact_batch_state = torch.cat([batch_state, oa_batch_state], dim=1)
+            loss = F.mse_loss(impact_net(impact_batch_state).gather(1, batch_action.long()), y)
             if torch.isinf(loss).any().cpu().item():
                 print("hi")
             impact_optimizer.zero_grad()

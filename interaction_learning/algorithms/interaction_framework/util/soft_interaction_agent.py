@@ -38,10 +38,11 @@ class SoftInteractionAgent:
 
         with torch.no_grad():
             current_q = other_agent_model.get_q(other_agent_batch_state)
-            current_v = other_agent_model.get_value(current_q)
+            current_v = other_agent_model.get_v(current_q)
             next_q = other_agent_model.get_q(other_agent_next_batch_state)
-            next_v = other_agent_model.get_value(next_q)
-            future_impact_q = self.model(batch_next_state)
+            next_v = other_agent_model.get_v(next_q)
+            impact_batch_next_state = torch.cat([batch_next_state, other_agent_next_batch_state], dim=1)
+            future_impact_q = self.model(impact_batch_next_state)
             future_impact_value = self.model.get_value(future_impact_q)
             r = next_v + batch_reward - current_v
             y = r + (1 - batch_done) * self.gamma * future_impact_value
@@ -76,8 +77,11 @@ class SoftInteractionAgent:
         if isinstance(batch_state, np.ndarray):
             batch_state = torch.FloatTensor(batch_state).unsqueeze(0).to(self.device)
         total_num = batch_state.shape[1]
-        column_order = list(range(other_agent_num * 4, other_agent_num * 4 + 4)) + list(range(4, total_num))
-        column_order[(self_agent_num + 1) * 4:(self_agent_num + 1) * 4 + 4] = list(range(4))
+        oa_idx_inc = int(other_agent_num < self_agent_num)
+        column_order = list(range((other_agent_num + oa_idx_inc) * 4,
+                                  (other_agent_num + oa_idx_inc) * 4 + 4)) + list(range(4, total_num))
+        idx_inc = int(self_agent_num < other_agent_num)
+        column_order[(self_agent_num + idx_inc) * 4:(self_agent_num + idx_inc) * 4 + 4] = list(range(4))
         new_batch_state = torch.index_select(batch_state, 1, torch.LongTensor(column_order))
         return new_batch_state
 

@@ -34,7 +34,7 @@ alpha = 0.1
 impact_alpha = 0.3
 net_1 = SoftQNetwork(env.observation_spaces["player_0"].shape[0], env.action_spaces["player_0"].n,
                      alpha, device="cpu").to(device)
-net_2 = SoftQNetwork(env.observation_spaces["player_0"].shape[0], env.action_spaces["player_0"].n,
+net_2 = SoftQNetwork(env.observation_spaces["player_0"].shape[0] * 2, env.action_spaces["player_0"].n,
                      impact_alpha, device="cpu").to(device)
 
 net_1.load_state_dict(torch.load("/hri/localdisk/drother/PycharmProjects/interaction_learning/interaction_learning/scripts/soft_q_tests/agent/sql_final_policy_y0d"))
@@ -44,9 +44,12 @@ net_2.load_state_dict(torch.load("/hri/localdisk/drother/PycharmProjects/interac
 state = env.reset()
 episode_reward = 0
 for time_steps in range(max_steps):
-    # action = net_1.select_action(state["player_0"])
-    action = 0
-    action_2 = net_2.select_action(state["player_1"])
+    action = net_1.select_action(state["player_0"])
+    # action = 0
+    torch_state = torch.cat(
+        [torch.Tensor(state["player_1"]).unsqueeze(0), torch.Tensor(state["player_0"]).unsqueeze(0)], dim=1)
+    # action_2 = net_2.select_action(torch_state)
+    action_2 = 0
     actions = {"player_0": action, "player_1": action_2}
     next_state, reward, done, _ = env.step(actions)
     episode_reward += reward["player_0"]

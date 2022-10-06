@@ -53,6 +53,8 @@ for interaction_task, task in zip(interaction_tasks, tasks):
     interaction_agent.add_interaction(interaction_task)
     interaction_agent.switch_active_tasks([interaction_task])
 
+    other_agent.switch_active_tasks([task])
+
     episode_reward = 0
     num_eval_runs = 100
 
@@ -63,9 +65,10 @@ for interaction_task, task in zip(interaction_tasks, tasks):
         episode_reward = 0
         for time_steps in range(max_steps):
             action = interaction_agent.select_action(state["player_0"], self_agent_num=0, other_agent_num=1)
-            actions = {"player_0": action, "player_1": 0}
+            action_2 = other_agent.select_action(state["player_1"])
+            actions = {"player_0": action, "player_1": action_2}
             next_state, reward, done, _ = env.step(actions)
-            episode_reward += reward["player_0"]
+            episode_reward += reward["player_1"]
 
             interaction_agent.add_transition(state["player_0"], next_state["player_0"], action,
                                              reward["player_1"], done["player_0"])
@@ -74,14 +77,14 @@ for interaction_task, task in zip(interaction_tasks, tasks):
                 interaction_agent.learn_step(other_agent_num=1, self_agent_num=0,
                                              other_agent_model=other_agent.get_active_task_model())
 
-            if done["player_0"]:
+            if all(done.values()):
                 break
 
             state = next_state
         if epoch % 10 == 0:
-            evaluation_scores.append(evaluate(env, 10, [interaction_agent, other_agent]))
+            evaluation_scores.append(evaluate(env, num_eval_runs, [interaction_agent, other_agent]))
             # torch.save(onlineQNetwork.state_dict(), f'agent/sql{epoch}policy_y0dimpact')
-            print('Epoch {}\tMoving average score: {:.2f}\t'.format(epoch, episode_reward))
+            print('Epoch {}\tScore: {:.2f}\t'.format(epoch, episode_reward))
 
     eval_mean = []
     eval_std = []

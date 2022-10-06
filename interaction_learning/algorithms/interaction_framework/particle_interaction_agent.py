@@ -68,17 +68,17 @@ class ParticleInteractionAgent:
         self.memory.clear()
         self.learn_step_counter = 0
 
-    def select_action(self, state, self_agent_num=0, other_agent_num=1):
+    def select_action(self, state, self_agent_num=0, other_agent_nums=None):
         active_task = [task for task in self.current_active_tasks if "t" in task]
         active_interactions = [interaction for interaction in self.current_active_tasks if "i" in interaction]
         if active_task and not active_interactions:
             action = self.task_models[active_task[0]].select_action(state)
         elif not active_task and len(active_interactions) == 1:
             action = self.interaction_models[active_interactions[0]].select_action(state, self_agent_num,
-                                                                                   other_agent_num)
+                                                                                   other_agent_nums[0])
         elif active_task and active_interactions:
             action = self.combine_task_actions(state, active_task, active_interactions, self_agent_num,
-                                               other_agent_num)
+                                               other_agent_nums)
         else:
             raise Exception("Unexpected Active Task or Interaction Combination. Maybe none is selected?")
         return action
@@ -105,7 +105,8 @@ class ParticleInteractionAgent:
             v_task = self.task_models[active_task[0]].get_v(state)
             q_interactions = [self.interaction_models[inter].get_q(state, self_agent_num, o_num)
                               for inter, o_num in zip(active_interactions, other_agent_nums)]
-            v_interactions = [self.interaction_models[inter].get_v(state) for inter in active_interactions]
+            v_interactions = [self.interaction_models[inter].get_v(state) for q, inter in
+                              zip(q_interactions, active_interactions)]
 
             combined_q = (q_task + sum(q_interactions)) / (1 + len(q_interactions))
             combined_v = (v_task + sum(v_interactions)) / (1 + len(v_interactions))

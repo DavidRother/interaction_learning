@@ -26,15 +26,17 @@ def calc_relative_entropy(dist1, dist2):
 
 a = calc_entropy(act_dist)
 # print(calc_entropy(act_dist))
-# print(calc_relative_entropy(act_dist2, act_dist))
+print(calc_relative_entropy(act_dist, act_dist))
 # print(calc_relative_entropy(act_dist2, act_dist3))
 
 task_entropy = calc_entropy(act_dist4)
 
-relative_entropies = [calc_relative_entropy(act_dist4, act_dist)]
-# , calc_relative_entropy(act_dist2, act_dist4),
-#                   calc_relative_entropy(act_dist3, act_dist4), calc_relative_entropy(act_dist5, act_dist4),
-#                   calc_relative_entropy(act_dist6, act_dist4)]
+relative_entropies = [calc_relative_entropy(act_dist, act_dist4), calc_relative_entropy(act_dist2, act_dist4),
+                      calc_relative_entropy(act_dist3, act_dist4),
+                      calc_relative_entropy(act_dist5, act_dist4), calc_relative_entropy(act_dist6, act_dist4)]
+
+impact_entropies = [calc_entropy(act_dist), calc_entropy(act_dist2), calc_entropy(act_dist3), calc_entropy(act_dist5),
+                    calc_entropy(act_dist6)]
 
 unnormalized_task_weight = (1 - task_entropy)
 relative_entropy_task_weight = sum(relative_entropies) / len(relative_entropies)
@@ -48,6 +50,15 @@ all_weights = [task_weight] + impact_weights
 
 all_weights_normalized = [w / sum(all_weights) for w in all_weights]
 
+linear_space_task_entropy = np.power(len(act_dist4), task_entropy) / len(act_dist4)
+linear_space_impact_entropies = [np.power(len(act_dist), ent) / len(act_dist4) for ent in impact_entropies]
+
+linear_relative_entropies = [np.power(len(act_dist), ent) / len(act_dist4) for ent in relative_entropies]
+
+linear_normalize_sum = ((1 - linear_space_task_entropy) + sum([(1-ent) * (1 - r_ent) for ent, r_ent in zip(linear_space_impact_entropies, linear_relative_entropies)]))
+linear_task_self_weight = (1 - linear_space_task_entropy) / linear_normalize_sum
+linear_impact_self_weights = [(1 - ent) * (1 - r_ent) / linear_normalize_sum for ent, r_ent in zip(linear_space_impact_entropies, linear_relative_entropies)]
+
 print(f"task_entropy: {task_entropy}")
 print(f"relative_entropies: {relative_entropies}")
 print(f"unnormalized_task_weight: {unnormalized_task_weight}")
@@ -59,6 +70,13 @@ print(f"task_weight: {task_weight}")
 print(f"sum weights: {task_weight + sum(impact_weights)}")
 print(f"all_weights_normalized: {all_weights_normalized}")
 print(f"Sum all weights: {sum(all_weights_normalized)}")
+print(f"Linear_space_task_entropy: {linear_space_task_entropy}")
+print(f"Linear_space_impact_entropies: {linear_space_impact_entropies}")
+print(f"Linear Relative Entropies: {linear_relative_entropies}")
+print(f"Linear Task Self Weight: {linear_task_self_weight}")
+print(f"Linear Impact Self Weights: {linear_impact_self_weights}")
+print(f"Sum linear_weights: {linear_task_self_weight + sum(linear_impact_self_weights)}")
+
 
 
 
