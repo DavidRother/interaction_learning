@@ -62,7 +62,7 @@ for interaction_task, task in zip(interaction_tasks, tasks):
         state = env.reset()
         episode_reward = 0
         for time_steps in range(max_steps):
-            action = interaction_agent.select_action(state["player_0"])
+            action = interaction_agent.select_action(state["player_0"], self_agent_num=0, other_agent_num=1)
             actions = {"player_0": action, "player_1": 0}
             next_state, reward, done, _ = env.step(actions)
             episode_reward += reward["player_0"]
@@ -71,7 +71,8 @@ for interaction_task, task in zip(interaction_tasks, tasks):
                                              reward["player_1"], done["player_0"])
 
             if time_steps % 4 == 0:
-                interaction_agent.learn_step(other_agent_num=1, self_agent_num=0, other_agent_model=other_agent)
+                interaction_agent.learn_step(other_agent_num=1, self_agent_num=0,
+                                             other_agent_model=other_agent.get_active_task_model())
 
             if done["player_0"]:
                 break

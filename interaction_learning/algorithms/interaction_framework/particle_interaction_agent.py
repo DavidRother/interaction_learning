@@ -41,6 +41,12 @@ class ParticleInteractionAgent:
         with open(base_path, "wb") as output_file:
             pickle.dump(self, output_file)
 
+    def get_active_task_model(self):
+        return self.task_models[self.get_active_task()]
+
+    def get_active_task(self):
+        return [task for task in self.current_active_tasks if "t" in task][0]
+
     def add_task(self, task):
         new_model = SoftAgent(self.obs_dim, self.n_actions, self.task_alpha, self.batch_size, self.gamma,
                               self.target_update_interval, self.device)
@@ -71,7 +77,8 @@ class ParticleInteractionAgent:
             action = self.interaction_models[active_interactions[0]].select_action(state, self_agent_num,
                                                                                    other_agent_num)
         elif active_task and active_interactions:
-            action = self.combine_task_actions(state, active_task, active_interactions)
+            action = self.combine_task_actions(state, active_task, active_interactions, self_agent_num,
+                                               other_agent_num)
         else:
             raise Exception("Unexpected Active Task or Interaction Combination. Maybe none is selected?")
         return action
@@ -90,12 +97,14 @@ class ParticleInteractionAgent:
             active_task = [task for task in self.current_active_tasks if "i" in task][0]
             self.interaction_models[active_task].learn(self.memory, other_agent_num, self_agent_num, other_agent_model)
 
-    def combine_task_actions(self, state, active_task, active_interactions):
-        state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+    def combine_task_actions(self, state, active_task, active_interactions, self_agent_num, other_agent_nums):
+        if not isinstance(state, torch.Tensor):
+            state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         with torch.no_grad():
             q_task = self.task_models[active_task[0]].get_q(state)
             v_task = self.task_models[active_task[0]].get_v(state)
-            q_interactions = [self.interaction_models[inter].get_q(state) for inter in active_interactions]
+            q_interactions = [self.interaction_models[inter].get_q(state, self_agent_num, o_num)
+                              for inter, o_num in zip(active_interactions, other_agent_nums)]
             v_interactions = [self.interaction_models[inter].get_v(state) for inter in active_interactions]
 
             combined_q = (q_task + sum(q_interactions)) / (1 + len(q_interactions))

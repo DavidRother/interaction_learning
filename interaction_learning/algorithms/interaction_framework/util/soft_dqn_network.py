@@ -39,7 +39,8 @@ class SoftQNetwork(nn.Module):
         return v
 
     def select_action(self, state, greedy=False):
-        state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        if not isinstance(state, torch.Tensor):
+            state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         # print('state : ', state)
         with torch.no_grad():
             q = self.forward(state)

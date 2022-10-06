@@ -56,22 +56,28 @@ class SoftInteractionAgent:
         return loss.cpu().item()
 
     def select_action(self, state, self_agent_num, other_agent_num):
+        if not isinstance(state, torch.Tensor):
+            state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         self_state = state
         other_state = self.transform_state_pov(state, self_agent_num, other_agent_num)
         impact_state = torch.cat([self_state, other_state], dim=1)
         return self.model.select_action(impact_state)
 
-    def get_q(self, state):
-        return self.model(state)
+    def get_q(self, state, self_agent_num, other_agent_num):
+        self_state = state
+        other_state = self.transform_state_pov(state, self_agent_num, other_agent_num)
+        impact_state = torch.cat([self_state, other_state], dim=1)
+        return self.model(impact_state)
 
     def get_v(self, q):
         return self.model.get_value(q)
 
-    @staticmethod
-    def transform_state_pov(batch_state, self_agent_num, other_agent_num):
+    def transform_state_pov(self, batch_state, self_agent_num, other_agent_num):
+        if isinstance(batch_state, np.ndarray):
+            batch_state = torch.FloatTensor(batch_state).unsqueeze(0).to(self.device)
         total_num = batch_state.shape[1]
         column_order = list(range(other_agent_num * 4, other_agent_num * 4 + 4)) + list(range(4, total_num))
-        column_order[self_agent_num * 4:self_agent_num * 4 + 4] = list(range(4))
+        column_order[(self_agent_num + 1) * 4:(self_agent_num + 1) * 4 + 4] = list(range(4))
         new_batch_state = torch.index_select(batch_state, 1, torch.LongTensor(column_order))
         return new_batch_state
 
