@@ -55,4 +55,7 @@ class SoftAgent:
     def get_v(self, q):
         return self.model.get_value(q)
 
+    def get_dist(self, q):
+        return self.model.get_dist(q)
+
 

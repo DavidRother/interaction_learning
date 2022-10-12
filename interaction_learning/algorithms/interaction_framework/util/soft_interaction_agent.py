@@ -85,4 +85,7 @@ class SoftInteractionAgent:
         new_batch_state = torch.index_select(batch_state, 1, torch.LongTensor(column_order))
         return new_batch_state
 
+    def get_dist(self, q):
+        return self.model.get_dist(q)
+
 

@@ -38,6 +38,12 @@ class SoftQNetwork(nn.Module):
         v = self.alpha * torch.log(torch.sum(torch.exp(q_value / self.alpha), dim=1, keepdim=True))
         return v
 
+    def get_dist(self, q_value):
+        v = self.get_value(q_value)
+        dist = torch.exp((q_value - v) / self.alpha)
+        dist = dist / torch.sum(dist)
+        return dist
+
     def select_action(self, state, greedy=False):
         if not isinstance(state, torch.Tensor):
             state = torch.FloatTensor(state).unsqueeze(0).to(self.device)

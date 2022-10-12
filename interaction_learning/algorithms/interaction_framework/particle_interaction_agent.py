@@ -2,6 +2,7 @@ from interaction_learning.algorithms.interaction_framework.util.memory import Me
 from interaction_learning.algorithms.interaction_framework.util.soft_agent import SoftAgent
 from interaction_learning.algorithms.interaction_framework.util.soft_interaction_agent import SoftInteractionAgent
 import torch
+import numpy as np
 from torch.distributions import Categorical
 
 import pickle
@@ -13,8 +14,8 @@ class ParticleInteractionAgent:
     LEARN_TASK = "learn_task"
     INFERENCE = "inference"
 
-    def __init__(self, obs_dim, n_actions, task_alpha, impact_alpha, batch_size, gamma, target_update_interval,
-                 memory_size, device):
+    def __init__(self, obs_dim, n_actions, task_alpha, impact_alpha, action_alignment, batch_size, gamma,
+                 target_update_interval, memory_size, device):
         self.task_models = {}
         self.interaction_models = {}
         self.memory_size = memory_size
@@ -30,6 +31,7 @@ class ParticleInteractionAgent:
         self.current_active_tasks = []
         self.mode = self.LEARN_TASK
         self.learn_step_counter = 0
+        self.action_alignment = action_alignment
 
     def load_task_model(self, task, path):
         pass
@@ -102,16 +104,46 @@ class ParticleInteractionAgent:
             state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         with torch.no_grad():
             q_task = self.task_models[active_task[0]].get_q(state)
-            v_task = self.task_models[active_task[0]].get_v(state)
             q_interactions = [self.interaction_models[inter].get_q(state, self_agent_num, o_num)
                               for inter, o_num in zip(active_interactions, other_agent_nums)]
-            v_interactions = [self.interaction_models[inter].get_v(state) for q, inter in
-                              zip(q_interactions, active_interactions)]
 
-            combined_q = (q_task + sum(q_interactions)) / (1 + len(q_interactions))
-            combined_v = (v_task + sum(v_interactions)) / (1 + len(v_interactions))
+            weights = torch.FloatTensor([1./(1 + len(q_interactions))] * (1 + len(q_interactions)))
+            if self.action_alignment:
+                dist_task = self.task_models[active_task[0]].get_dist(q_task)
+                dist_interactions = [self.interaction_models[inter].get_dist(q)
+                                     for inter, q in zip(active_interactions, q_interactions)]
+                dists = [dist_task.cpu().numpy().flatten()] + [d.cpu().numpy().flatten() for d in dist_interactions]
+                entropies = [1 - self.calc_entropy(inter) for inter in dists]
+                r_ent = [1 - self.calc_relative_entropy(dist, dists[0]) for dist in dists]
+                support = len(dists[0])
+                linear_entropies = [np.power(support, ent) / support for ent in entropies]
+                linear_r_ent = [np.power(support, ent) / support for ent in r_ent]
+                ent_weights = torch.Tensor([l_ent * l_r_ent for l_ent, l_r_ent in zip(linear_entropies, linear_r_ent)])
+                weights = ent_weights / sum(ent_weights)
+            q_values = [q_task] + [q for q in q_interactions]
+            comb_q = []
+            for q, w in zip(q_values, weights):
+                comb_q.append(q*w.item())
+            combined_q = torch.Tensor(sum(comb_q))
+            combined_v = self.task_models[active_task[0]].get_v(combined_q)
 
             dist = torch.exp((combined_q - combined_v) / self.task_alpha)
             c = Categorical(dist)
             a = c.sample()
         return a.item()
+
+    @staticmethod
+    def calc_entropy(dist):
+        my_sum = 0
+        for p in dist:
+            if p > 0:
+                my_sum += p * np.log(p) / np.log(len(dist))
+        return - my_sum
+
+    @staticmethod
+    def calc_relative_entropy(dist1, dist2):
+        my_sum = 0
+        for p, q in zip(dist1, dist2):
+            if p > 0 and q > 0:
+                my_sum += p * np.log(p / q) / np.log(len(dist1))
+        return my_sum
