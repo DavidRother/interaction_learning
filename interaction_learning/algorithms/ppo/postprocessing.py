@@ -233,23 +233,8 @@ def postprocess(agents, ma_buffer, agent_configs):
     for player in agents:
         _ = agents[player](ma_buffer.buffer[player][OBS])
         ma_buffer.buffer[player][VF_PREDS] = agents[player].value_function().tolist()
-        ma_buffer.buffer[player][EGO_VF_PREDS] = agents[player].ego_value_function().tolist()
         dist = Categorical(logits=ma_buffer.buffer[player][ACTION_DIST_INPUTS])
         ma_buffer.buffer[player][ACTION_PROB] = dist.probs[range(dist.probs.shape[0]), :, ma_buffer.buffer[player][ACTIONS].long()].detach().cpu().numpy().tolist()
         ma_buffer.buffer[player][ACTION_LOGP] = dist.logits[range(dist.probs.shape[0]), :, ma_buffer.buffer[player][ACTIONS].long()].detach().cpu().numpy().tolist()
-    buf_dict = {player: ma_buffer.buffer[player].buffer_episodes() for player in agents}
 
-    for player in agents:
-        new_buf_list = []
-        other_agents = [*agents]
-        other_agents.remove(player)
-        for idx, buf in enumerate(buf_dict[player]):
-            other_agent_buf_dict = {p: buf_dict[p][idx] for p in buf_dict if p != player}
-            new_buf_list.append(compute_prosocial_gae_for_sample_batch(agents[player], agent_configs[player],
-                                                                       buf, other_agent_buf_dict))
-        new_buffer = Buffer(ma_buffer.buffer[player].size)
-        for buf in new_buf_list:
-            for key in buf.data_struct:
-                new_buffer.data_struct[key].extend(buf.data_struct[key])
-        ma_buffer.buffer[player] = new_buffer
     return ma_buffer

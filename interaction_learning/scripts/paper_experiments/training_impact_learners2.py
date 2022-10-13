@@ -12,7 +12,6 @@ x_tasks = ["a", "b", "c", "d", "e"]
 y_tasks = ["0", "1", "2", "3", "4"]
 tasks = ["t" + x + y for x in x_tasks for y in y_tasks] + ["t" + x for x in x_tasks] + ["t" + y for y in y_tasks]
 impact_tasks = ["i" + x + y for x in x_tasks for y in y_tasks] + ["i" + x for x in x_tasks] + ["i" + y for y in y_tasks]
-impact_tasks = [impact_tasks[0]]
 device = torch.device("cpu")
 
 # 0 is do nothing 1 is move right 2 is down 3 is left 4 is up

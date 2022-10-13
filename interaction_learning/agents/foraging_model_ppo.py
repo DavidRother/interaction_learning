@@ -17,7 +17,6 @@ class ForagingModel(nn.Module):
         )
         self._logits = nn.Sequential(nn.Tanh(), nn.Linear(128, out_dim))
         self._value_branch = nn.Sequential(nn.Tanh(), nn.Linear(128, 1))
-        self._ego_value_branch = nn.Sequential(nn.Tanh(), nn.Linear(128, 1))
         self._output = None
 
     def forward(self, obs):
@@ -28,10 +27,6 @@ class ForagingModel(nn.Module):
     def value_function(self):
         assert self._output is not None, "must call forward first!"
         return self._value_branch(self._output).squeeze(1)
-
-    def ego_value_function(self):
-        assert self._output is not None, "must call forward first!"
-        return self._ego_value_branch(self._output).squeeze(1)
 
     def import_from_h5(self, h5_file: str) -> None:
         self.load_state_dict(torch.load(h5_file).state_dict())

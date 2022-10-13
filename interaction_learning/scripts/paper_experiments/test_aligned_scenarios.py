@@ -15,6 +15,15 @@ impact_tasks = ["i" + x + y for x in x_tasks for y in y_tasks] + ["i" + x for x 
 impact_tasks = [impact_tasks[0]]
 device = torch.device("cpu")
 
+aligned_task_1 = ["ta", "te", "tb", "tc", "td"]
+impact_task_1 = ["ie0", "ia1", "id2", "ic4", "ib3"]
+aligned_task_2 = ["te0", "ta1", "td2", "tc4", "tb3"]
+
+algorithms = ["action_aligned_interaction_learner", "non_aligned_interaction_learner",
+              "ppo_joint_learner", "ppo_single_learner"]
+
+eval_scores = {alg: {} for alg in algorithms}
+
 # 0 is do nothing 1 is move right 2 is down 3 is left 4 is up
 
 
@@ -43,28 +52,98 @@ num_epochs = 200
 with open("impact_learner/all_ego_and_impact_task.agent", "rb") as input_file:
     interaction_agent = pickle.load(input_file)
 
-with open("impact_learner/all_ego_task.agent", "rb") as input_file:
-    other_agent = pickle.load(input_file)
-
 interaction_agent.switch_mode(ParticleInteractionAgent.INFERENCE)
-other_agent.switch_mode(ParticleInteractionAgent.INFERENCE)
+
+########################################################################################################################
+# Test aligned interaction learner #####################################################################################
+########################################################################################################################
 
 interaction_agent.action_alignment = True
 
-eval_scores = {}
+algorithm = "action_aligned_interaction_learner"
 
-for impact_task, task in zip(impact_tasks, tasks):
+for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
+
+    with open(f"ppo_other_agents/ppo_other_agent_{t2}", "rb") as input_file:
+        other_agent = pickle.load(input_file)
 
     env = parallel_env(num_agents=num_agents, agent_position_generator=agent_position_generator,
-                       agent_reward=["te", task],
+                       agent_reward=[t1, t2],
                        max_steps=max_steps, ghost_agents=ghost_agents, render=render)
 
-    interaction_agent.switch_active_tasks([impact_task, "te"])
+    interaction_agent.switch_active_tasks([i1, t1])
 
-    other_agent.switch_active_tasks([task])
     kwargs_agents = [{"self_agent_num": 0, "other_agent_nums": [1]}, {}]
     evaluation_scores = [evaluate(env, 10, [interaction_agent, other_agent], kwargs_agents=kwargs_agents)]
-    eval_scores[task] = evaluation_scores
+    eval_scores[algorithm][t1 + i1 + t2] = evaluation_scores
+
+########################################################################################################################
+# Test Non aligned interaction learner #################################################################################
+########################################################################################################################
+
+interaction_agent.action_alignment = False
+
+algorithm = "non_aligned_interaction_learner"
+
+for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
+    with open(f"ppo_other_agents/ppo_other_agent_{t2}", "rb") as input_file:
+        other_agent = pickle.load(input_file)
+
+    env = parallel_env(num_agents=num_agents, agent_position_generator=agent_position_generator,
+                       agent_reward=[t1, t2],
+                       max_steps=max_steps, ghost_agents=ghost_agents, render=render)
+
+    interaction_agent.switch_active_tasks([i1, t1])
+
+    kwargs_agents = [{"self_agent_num": 0, "other_agent_nums": [1]}, {}]
+    evaluation_scores = [evaluate(env, 10, [interaction_agent, other_agent], kwargs_agents=kwargs_agents)]
+    eval_scores[algorithm][t1 + i1 + t2] = evaluation_scores
+
+
+########################################################################################################################
+# Test PPO #############################################################################################################
+########################################################################################################################
+
+algorithm = "ppo_joint_learner"
+
+for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
+    with open(f"ppo_joint_learner/ppo_joint_agent_{t1 + i1}", "rb") as input_file:
+        ppo_agent = pickle.load(input_file)
+    with open(f"ppo_other_agents/ppo_other_agent_{t2}", "rb") as input_file:
+        other_agent = pickle.load(input_file)
+
+    env = parallel_env(num_agents=num_agents, agent_position_generator=agent_position_generator,
+                       agent_reward=[t1, t2],
+                       max_steps=max_steps, ghost_agents=ghost_agents, render=render)
+
+    kwargs_agents = [{"self_agent_num": 0, "other_agent_nums": [1]}, {}]
+    evaluation_scores = [evaluate(env, 10, [ppo_agent, other_agent], kwargs_agents=kwargs_agents)]
+    eval_scores[algorithm][t1 + i1 + t2] = evaluation_scores
+
+
+########################################################################################################################
+# Test PPO #############################################################################################################
+########################################################################################################################
+
+algorithm = "ppo_single_learner"
+
+for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
+    with open(f"ppo_learner/ppo_single_learner_{t1}", "rb") as input_file:
+        ppo_agent = pickle.load(input_file)
+    with open(f"ppo_other_agents/ppo_other_agent_{t2}", "rb") as input_file:
+        other_agent = pickle.load(input_file)
+
+    env = parallel_env(num_agents=num_agents, agent_position_generator=agent_position_generator,
+                       agent_reward=[t1, t2],
+                       max_steps=max_steps, ghost_agents=ghost_agents, render=render)
+
+    kwargs_agents = [{"self_agent_num": 0, "other_agent_nums": [1]}, {}]
+    evaluation_scores = [evaluate(env, 10, [ppo_agent, other_agent], kwargs_agents=kwargs_agents)]
+    eval_scores[algorithm][t1 + i1 + t2] = evaluation_scores
+
+########################################################################################################################
+# Save Results #########################################################################################################
+########################################################################################################################
 
 stats = {"eval_scores": eval_scores}
 with open("stats/test_aligned_scenarios.stats", 'wb') as outp:  # Overwrites any existing file.
