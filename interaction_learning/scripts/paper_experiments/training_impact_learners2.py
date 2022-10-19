@@ -18,6 +18,8 @@ tasks = ["t" + x + y for x in x_tasks for y in y_tasks] + ["t" + x for x in x_ta
 impact_tasks = ["i" + x + y for x in x_tasks for y in y_tasks] + ["i" + x for x in x_tasks] + ["i" + y for y in y_tasks]
 device = torch.device("cpu")
 
+tasks = ["ta0"]
+impact_tasks = ["ia0"]
 # 0 is do nothing 1 is move right 2 is down 3 is left 4 is up
 
 
@@ -34,14 +36,14 @@ env = parallel_env(num_agents=num_agents, agent_position_generator=agent_positio
 
 obs_dim = env.observation_spaces["player_0"].shape[0]
 n_actions = env.action_spaces["player_0"].n
-task_alpha = 0.2
-impact_alpha = 0.2
+task_alpha = 0.005
+impact_alpha = 0.005
 batch_size = 32
 gamma = 0.5
 target_update_interval = 1000
 memory_size = 50000
 
-num_epochs = 200
+num_epochs = 600
 
 with open("impact_learner/all_ego_task.agent", "rb") as input_file:
     interaction_agent = pickle.load(input_file)

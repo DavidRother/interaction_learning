@@ -35,7 +35,7 @@ with open(f"impact_learner/joint_learner_mis_goals.agent", "rb") as input_file:
     joint_agent = pickle.load(input_file)
     
     
-task = "ta3"
+task = "ta0"
 impact_task = "ic4"
 
 # Koordinaten und Richtungen definieren
@@ -49,8 +49,8 @@ for a in range(x.shape[0]):
         p_obs[0] = x[a][b]
         p_obs[1] = y[a][b]
         state = torch.FloatTensor(p_obs).unsqueeze(0).to("cpu")
-        q_task = interaction_agent.task_models[task].get_q(state)
-        dist_task = interaction_agent.task_models[task].get_dist(q_task)
+        q_task = other_agent.task_models[task].get_q(state)
+        dist_task = other_agent.task_models[task].get_dist(q_task)
 
         u[a, b] = dist_task.data[0, 1].item() - dist_task.data[0, 3].item()
         v[a, b] = dist_task.data[0, 2].item() - dist_task.data[0, 4].item()

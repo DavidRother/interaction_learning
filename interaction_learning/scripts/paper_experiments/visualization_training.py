@@ -11,11 +11,11 @@ x_tasks = ["a", "b", "c", "d", "e"]
 y_tasks = ["0", "1", "2", "3", "4"]
 tasks = ["t" + x + y for x in x_tasks for y in y_tasks] + ["t" + x for x in x_tasks] + ["t" + y for y in y_tasks]
 impact_tasks = ["i" + x + y for x in x_tasks for y in y_tasks] + ["i" + x for x in x_tasks] + ["i" + y for y in y_tasks]
-
+tasks = ["ta0"]
 with open("stats/training_impact_learners.stats", 'rb') as outp:  # Overwrites any existing file.
     obj = pickle.load(outp)
 
-num_steps = 200
+num_steps = 1000
 
 mean_train = []
 std_train = []

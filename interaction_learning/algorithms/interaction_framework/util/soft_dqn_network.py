@@ -35,7 +35,7 @@ class SoftQNetwork(nn.Module):
         return dist
 
     def get_value(self, q_value):
-        v = self.alpha * torch.log(torch.sum(torch.exp(q_value / self.alpha), dim=1, keepdim=True))
+        v = self.alpha * torch.logsumexp(q_value / self.alpha, dim=1, keepdim=True)
         return v
 
     def get_dist(self, q_value):
@@ -55,6 +55,7 @@ class SoftQNetwork(nn.Module):
             dist = torch.exp((q - v) / self.alpha)
             # print(dist)
             dist = dist / torch.sum(dist)
+            # print(f"Entropy: {self.calc_entropy(dist.cpu().numpy().flatten())} || Distribution: {dist}")
             if greedy:
                 a = np.argmax(dist)
             else:
@@ -62,3 +63,19 @@ class SoftQNetwork(nn.Module):
                 c = Categorical(dist)
                 a = c.sample()
         return a.item()
+
+    @staticmethod
+    def calc_entropy(dist):
+        my_sum = 0
+        for p in dist:
+            if p > 0:
+                my_sum += p * np.log(p) / np.log(len(dist))
+        return - my_sum
+
+    @staticmethod
+    def calc_relative_entropy(dist1, dist2):
+        my_sum = 0
+        for p, q in zip(dist1, dist2):
+            if p > 0 and q > 0:
+                my_sum += p * np.log(p / q) / np.log(len(dist1))
+        return my_sum

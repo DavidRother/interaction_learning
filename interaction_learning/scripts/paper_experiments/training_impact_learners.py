@@ -34,15 +34,15 @@ env = parallel_env(num_agents=num_agents, agent_position_generator=agent_positio
 obs_dim = env.observation_spaces["player_0"].shape[0]
 obs_dim_impact = 8
 n_actions = env.action_spaces["player_0"].n
-task_alpha = 0.05
-impact_alpha = 0.05
+task_alpha = 0.005
+impact_alpha = 0.005
 batch_size = 32
-gamma = 0.5
+gamma = 0.50
 target_update_interval = 1000
 memory_size = 50000
 action_alignment = False
 
-num_epochs = 200
+num_epochs = 600
 
 interaction_agent = ParticleInteractionAgent(obs_dim, obs_dim_impact, n_actions, task_alpha, impact_alpha,
                                              action_alignment, batch_size, gamma, target_update_interval,
@@ -51,6 +51,7 @@ interaction_agent = ParticleInteractionAgent(obs_dim, obs_dim_impact, n_actions,
 dummy_agent = DummyAgent()
 ep_rews = {}
 eval_scores = {}
+ep_length_stats = {}
 
 for task in tasks:
 
@@ -68,6 +69,7 @@ for task in tasks:
     action_dists = []
 
     episode_rewards = []
+    episode_lengths = []
     average_q = []
 
     action_bag = []
@@ -77,6 +79,7 @@ for task in tasks:
     for epoch in tqdm.tqdm(range(num_epochs)):
         state = env.reset()
         episode_reward = 0
+        ep_length = 0
         for time_steps in range(max_steps):
             action = interaction_agent.select_action(state["player_0"])
             actions = {"player_0": action, "player_1": 0}
@@ -87,11 +90,12 @@ for task in tasks:
                                              reward["player_0"], done["player_0"])
 
             action_distribution[action] += 1
+            ep_length += 1
 
             if time_steps % 4 == 0:
                 interaction_agent.learn_step()
 
-            if info["player_0"]["done_once"]:
+            if info["player_0"]["done_once"]["player_0"]:
                 dist = np.asarray(list(action_distribution.values())) / sum(action_distribution.values())
                 action_dists.append(dist)
                 action_distribution = {n: 0 for n in range(env.action_spaces["player_0"].n)}
@@ -105,6 +109,8 @@ for task in tasks:
         #     print(f"Reward higher than anticipated: {episode_reward}")
         action_bag = []
         episode_rewards.append(episode_reward)
+        episode_lengths.append(ep_length)
+        # print(f"Episode Rewards: {episode_reward} || Episode Length: {ep_length}")
         if epoch % 10 == 0:
             evaluation_scores.append(evaluate(env, 10, [interaction_agent, dummy_agent]))
             # torch.save(onlineQNetwork.state_dict(), f'agent/sql{epoch}policy_y0dimpact')
@@ -112,9 +118,10 @@ for task in tasks:
     print(episode_rewards)
     ep_rews[task] = episode_rewards
     eval_scores[task] = evaluation_scores
-    break
+    ep_length_stats[task] = episode_lengths
 
-stats = {"ep_rews": ep_rews, "eval_scores": eval_scores}
+
+stats = {"ep_rews": ep_rews, "eval_scores": eval_scores, "ep_lengths": ep_length_stats}
 with open("stats/training_impact_learners.stats", 'wb') as outp:  # Overwrites any existing file.
     pickle.dump(stats, outp, pickle.HIGHEST_PROTOCOL)
 interaction_agent.save_agent("impact_learner/all_ego_task.agent")

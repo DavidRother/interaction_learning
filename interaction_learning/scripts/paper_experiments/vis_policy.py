@@ -16,6 +16,7 @@ from interaction_learning.algorithms.ppo.buffer import MultiAgentBuffer, REWARDS
 from interaction_learning.algorithms.ppo.postprocessing import postprocess
 from interaction_learning.algorithms.ppo.ppo_loss import ppo_surrogate_loss
 from interaction_learning.agents.foraging_model_ppo import ForagingModel
+from interaction_learning.algorithms.interaction_framework.particle_interaction_agent import ParticleInteractionAgent
 from time import sleep
 
 
@@ -27,7 +28,7 @@ agent_position_generator = lambda: [np.asarray([np.random.uniform(0, 1), np.rand
                                     np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)])]
 
 
-agent_reward = [f"ta1", "tc4"]
+agent_reward = [f"ta0", "tc4"]
 max_steps = 1000
 ghost_agents = 0
 render = True
@@ -44,6 +45,8 @@ with open(f'ppo_learner/ppo_single_learner_te2.agent', "rb") as output_file:
 with open(f"impact_learner/all_ego_task.agent", "rb") as input_file:
     other_agent = pickle.load(input_file)
 
+other_agent.switch_mode(ParticleInteractionAgent.INFERENCE)
+other_agent.switch_active_tasks([agent_reward[0]])
 
 state = env.reset()
 episode_reward = 0
