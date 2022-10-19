@@ -18,6 +18,7 @@ class GenericModel(nn.Module):
         )
         self._logits = nn.Sequential(nn.Tanh(), nn.Linear(128, out_dim))
         self._value_branch = nn.Sequential(nn.Tanh(), nn.Linear(128, 1))
+        self._ego_value_branch = nn.Sequential(nn.Tanh(), nn.Linear(128, 1))
         self._output = None
 
     def forward(self, obs):

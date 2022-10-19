@@ -1,10 +1,16 @@
+from time import sleep
 
 
-def evaluate(env, num_episodes, agents, kwargs_agents=None):
+def evaluate(env, num_episodes, agents, kwargs_agents=None, render=False):
     kwargs_agents = kwargs_agents or [{}] * len(agents)
     episode_rewards = []
     for epoch in range(num_episodes):
         state = env.reset()
+
+        if render:
+            env.render()
+            sleep(0.1)
+
         episode_reward = {f"player_{idx}": 0 for idx in range(len(agents))}
         done = {f"player_{idx}": False for idx in range(len(agents))}
         while not all(done.values()):
@@ -14,6 +20,10 @@ def evaluate(env, num_episodes, agents, kwargs_agents=None):
                 episode_reward[agent] += rew
 
             state = next_state
+
+            if render:
+                env.render()
+                sleep(0.1)
 
         episode_rewards.append(episode_reward)
 

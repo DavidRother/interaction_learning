@@ -1,12 +1,16 @@
 from interaction_learning.algorithms.interaction_framework.particle_interaction_agent import ParticleInteractionAgent
 from interaction_learning.core.evaluation import evaluate
 from partigames.environment.zoo_env import parallel_env
+from interaction_learning.core.util import make_deterministic
 import matplotlib.pyplot as plt
 from time import sleep
 import numpy as np
 import torch
 import tqdm
 import pickle
+
+
+make_deterministic(1)
 
 x_tasks = ["a", "b", "c", "d", "e"]
 y_tasks = ["0", "1", "2", "3", "4"]
@@ -20,7 +24,7 @@ impact_task_1 = ["ib3", "ic4", "ia0", "id2", "ie1"]
 aligned_task_2 = ["tb3", "tc4", "ta0", "td2", "te1"]
 
 algorithms = ["action_aligned_interaction_learner", "non_aligned_interaction_learner",
-              "ppo_joint_learner", "ppo_single_learner"]
+              "selfish_task_solver", "joint_learner"]
 
 eval_scores = {alg: {} for alg in algorithms}
 

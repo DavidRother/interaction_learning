@@ -1,12 +1,16 @@
 from interaction_learning.algorithms.interaction_framework.particle_interaction_agent import ParticleInteractionAgent
 from interaction_learning.core.evaluation import evaluate
 from partigames.environment.zoo_env import parallel_env
+from interaction_learning.core.util import make_deterministic, AgentPositionGenerator
 import matplotlib.pyplot as plt
 from time import sleep
 import numpy as np
 import torch
 import tqdm
 import pickle
+
+
+make_deterministic(1)
 
 x_tasks = ["a", "b", "c", "d", "e"]
 y_tasks = ["0", "1", "2", "3", "4"]
@@ -20,15 +24,16 @@ impact_task_1 = ["ie0", "ia1", "id2", "ic4", "ib3"]
 aligned_task_2 = ["te0", "ta1", "td2", "tc4", "tb3"]
 
 algorithms = ["action_aligned_interaction_learner", "non_aligned_interaction_learner",
-              "ppo_joint_learner", "ppo_single_learner"]
+              "selfish_task_solver", "joint_learner"]
 
 eval_scores = {alg: {} for alg in algorithms}
 
 # 0 is do nothing 1 is move right 2 is down 3 is left 4 is up
 
+num_eval = 100
 
-agent_position_generator = lambda: [np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)]),
-                                    np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)])]
+
+agent_position_generator = AgentPositionGenerator(num_eval * 10)
 agent_reward = ["x"]
 max_steps = 1000
 ghost_agents = 0
@@ -52,7 +57,15 @@ num_epochs = 200
 with open("impact_learner/all_ego_and_impact_task.agent", "rb") as input_file:
     interaction_agent = pickle.load(input_file)
 
+with open(f"impact_learner/all_ego_task.agent", "rb") as input_file:
+    other_agent = pickle.load(input_file)
+
+with open(f"impact_learner/joint_learner.agent", "rb") as input_file:
+    joint_agent = pickle.load(input_file)
+
 interaction_agent.switch_mode(ParticleInteractionAgent.INFERENCE)
+other_agent.switch_mode(ParticleInteractionAgent.INFERENCE)
+joint_agent.switch_mode(ParticleInteractionAgent.INFERENCE)
 
 ########################################################################################################################
 # Test aligned interaction learner #####################################################################################
@@ -62,19 +75,20 @@ interaction_agent.action_alignment = True
 
 algorithm = "action_aligned_interaction_learner"
 
-for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
+agent_position_generator.reset()
 
-    with open(f"ppo_other_agents/ppo_other_agent_{t2}", "rb") as input_file:
-        other_agent = pickle.load(input_file)
+for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
 
     env = parallel_env(num_agents=num_agents, agent_position_generator=agent_position_generator,
                        agent_reward=[t1, t2],
                        max_steps=max_steps, ghost_agents=ghost_agents, render=render)
 
     interaction_agent.switch_active_tasks([i1, t1])
+    other_agent.switch_active_tasks([t2])
 
     kwargs_agents = [{"self_agent_num": 0, "other_agent_nums": [1]}, {}]
-    evaluation_scores = [evaluate(env, 10, [interaction_agent, other_agent], kwargs_agents=kwargs_agents)]
+    evaluation_scores = [evaluate(env, num_eval, [interaction_agent, other_agent], kwargs_agents=kwargs_agents,
+                                  render=render)]
     eval_scores[algorithm][t1 + i1 + t2] = evaluation_scores
 
 ########################################################################################################################
@@ -85,18 +99,19 @@ interaction_agent.action_alignment = False
 
 algorithm = "non_aligned_interaction_learner"
 
+agent_position_generator.reset()
+
 for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
-    with open(f"ppo_other_agents/ppo_other_agent_{t2}", "rb") as input_file:
-        other_agent = pickle.load(input_file)
 
     env = parallel_env(num_agents=num_agents, agent_position_generator=agent_position_generator,
                        agent_reward=[t1, t2],
                        max_steps=max_steps, ghost_agents=ghost_agents, render=render)
 
     interaction_agent.switch_active_tasks([i1, t1])
+    other_agent.switch_active_tasks([t2])
 
     kwargs_agents = [{"self_agent_num": 0, "other_agent_nums": [1]}, {}]
-    evaluation_scores = [evaluate(env, 10, [interaction_agent, other_agent], kwargs_agents=kwargs_agents)]
+    evaluation_scores = [evaluate(env, num_eval, [interaction_agent, other_agent], kwargs_agents=kwargs_agents)]
     eval_scores[algorithm][t1 + i1 + t2] = evaluation_scores
 
 
@@ -104,20 +119,23 @@ for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
 # Test PPO #############################################################################################################
 ########################################################################################################################
 
-algorithm = "ppo_joint_learner"
+algorithm = "selfish_task_solver"
+
+agent_position_generator.reset()
 
 for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
-    with open(f"ppo_joint_learner/ppo_joint_agent_{t1 + i1}", "rb") as input_file:
-        ppo_agent = pickle.load(input_file)
-    with open(f"ppo_other_agents/ppo_other_agent_{t2}", "rb") as input_file:
-        other_agent = pickle.load(input_file)
 
     env = parallel_env(num_agents=num_agents, agent_position_generator=agent_position_generator,
                        agent_reward=[t1, t2],
                        max_steps=max_steps, ghost_agents=ghost_agents, render=render)
 
+    interaction_agent.switch_active_tasks([t1])
+    other_agent.switch_active_tasks([t2])
+
     kwargs_agents = [{"self_agent_num": 0, "other_agent_nums": [1]}, {}]
-    evaluation_scores = [evaluate(env, 10, [ppo_agent, other_agent], kwargs_agents=kwargs_agents)]
+    evaluation_scores = [evaluate(env, num_eval, [interaction_agent, other_agent], kwargs_agents=kwargs_agents,
+                                  render=render)]
+
     eval_scores[algorithm][t1 + i1 + t2] = evaluation_scores
 
 
@@ -125,20 +143,21 @@ for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
 # Test PPO #############################################################################################################
 ########################################################################################################################
 
-algorithm = "ppo_single_learner"
+algorithm = "joint_learner"
+
+agent_position_generator.reset()
 
 for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
-    with open(f"ppo_learner/ppo_single_learner_{t1}", "rb") as input_file:
-        ppo_agent = pickle.load(input_file)
-    with open(f"ppo_other_agents/ppo_other_agent_{t2}", "rb") as input_file:
-        other_agent = pickle.load(input_file)
 
     env = parallel_env(num_agents=num_agents, agent_position_generator=agent_position_generator,
                        agent_reward=[t1, t2],
                        max_steps=max_steps, ghost_agents=ghost_agents, render=render)
 
+    joint_agent.switch_active_tasks([t1])
+    other_agent.switch_active_tasks([t2])
+
     kwargs_agents = [{"self_agent_num": 0, "other_agent_nums": [1]}, {}]
-    evaluation_scores = [evaluate(env, 10, [ppo_agent, other_agent], kwargs_agents=kwargs_agents)]
+    evaluation_scores = [evaluate(env, num_eval, [joint_agent, other_agent], kwargs_agents=kwargs_agents)]
     eval_scores[algorithm][t1 + i1 + t2] = evaluation_scores
 
 ########################################################################################################################

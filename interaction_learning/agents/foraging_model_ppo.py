@@ -28,5 +28,9 @@ class ForagingModel(nn.Module):
         assert self._output is not None, "must call forward first!"
         return self._value_branch(self._output).squeeze(1)
 
+    def ego_value_function(self):
+        assert self._output is not None, "must call forward first!"
+        return self._ego_value_branch(self._output).squeeze(1)
+
     def import_from_h5(self, h5_file: str) -> None:
         self.load_state_dict(torch.load(h5_file).state_dict())

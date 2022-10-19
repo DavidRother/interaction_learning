@@ -62,7 +62,7 @@ ep_rews = {}
 eval_scores = {}
 
 collected_steps = 0
-num_epochs = 200
+num_epochs = 400
 
 for task in tasks:
 

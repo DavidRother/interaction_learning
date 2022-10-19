@@ -14,13 +14,14 @@ class ParticleInteractionAgent:
     LEARN_TASK = "learn_task"
     INFERENCE = "inference"
 
-    def __init__(self, obs_dim, n_actions, task_alpha, impact_alpha, action_alignment, batch_size, gamma,
-                 target_update_interval, memory_size, device):
+    def __init__(self, obs_dim, obs_dim_impact, n_actions, task_alpha, impact_alpha, action_alignment, batch_size,
+                 gamma, target_update_interval, memory_size, device):
         self.task_models = {}
         self.interaction_models = {}
         self.memory_size = memory_size
         self.memory = Memory(memory_size)
         self.obs_dim = obs_dim
+        self.obs_dim_impact = obs_dim_impact
         self.n_actions = n_actions
         self.task_alpha = task_alpha
         self.impact_alpha = impact_alpha
@@ -55,8 +56,8 @@ class ParticleInteractionAgent:
         self.task_models[task] = new_model
 
     def add_interaction(self, interaction):
-        new_model = SoftInteractionAgent(self.obs_dim, self.n_actions, self.impact_alpha, self.batch_size, self.gamma,
-                                         self.target_update_interval, self.device)
+        new_model = SoftInteractionAgent(self.obs_dim_impact, self.n_actions, self.impact_alpha, self.batch_size,
+                                         self.gamma, self.target_update_interval, self.device)
         self.interaction_models[interaction] = new_model
 
     def switch_active_tasks(self, new_active_tasks):
