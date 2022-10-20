@@ -24,7 +24,7 @@ device = torch.device("cpu")
 agent_position_generator = lambda: [np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)]),
                                     np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)])]
 agent_reward = ["x"]
-max_steps = 1000
+max_steps = 600
 ghost_agents = 0
 render = False
 num_agents = 2
