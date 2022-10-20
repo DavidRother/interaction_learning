@@ -18,15 +18,13 @@ tasks = ["t" + x + y for x in x_tasks for y in y_tasks] + ["t" + x for x in x_ta
 impact_tasks = ["i" + x + y for x in x_tasks for y in y_tasks] + ["i" + x for x in x_tasks] + ["i" + y for y in y_tasks]
 device = torch.device("cpu")
 
-tasks = ["ta0"]
-impact_tasks = ["ia0"]
 # 0 is do nothing 1 is move right 2 is down 3 is left 4 is up
 
 
 agent_position_generator = lambda: [np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)]),
                                     np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)])]
 agent_reward = ["x"]
-max_steps = 1000
+max_steps = 600
 ghost_agents = 0
 render = False
 num_agents = 2
