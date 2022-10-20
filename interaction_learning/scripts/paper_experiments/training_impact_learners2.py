@@ -18,8 +18,6 @@ tasks = ["t" + x + y for x in x_tasks for y in y_tasks] + ["t" + x for x in x_ta
 impact_tasks = ["i" + x + y for x in x_tasks for y in y_tasks] + ["i" + x for x in x_tasks] + ["i" + y for y in y_tasks]
 device = torch.device("cpu")
 
-tasks = ["ta0"]
-impact_tasks = ["ia0"]
 # 0 is do nothing 1 is move right 2 is down 3 is left 4 is up
 
 
@@ -43,7 +41,7 @@ gamma = 0.5
 target_update_interval = 1000
 memory_size = 50000
 
-num_epochs = 600
+num_epochs = 300
 
 with open("impact_learner/all_ego_task.agent", "rb") as input_file:
     interaction_agent = pickle.load(input_file)

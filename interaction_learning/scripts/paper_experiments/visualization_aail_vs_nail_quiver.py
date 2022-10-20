@@ -36,7 +36,7 @@ with open(f"impact_learner/joint_learner_mis_goals.agent", "rb") as input_file:
     
     
 task = "ta0"
-impact_task = "ic4"
+impact_task = "ia0"
 
 # Koordinaten und Richtungen definieren
 x, y = np.meshgrid(np.arange(0.0, 1.0, .05), np.arange(0.0, 1.0, .05))
@@ -68,11 +68,7 @@ ax1.axis('equal')
 fig1.tight_layout()
 ax1.set_title("Ego Task")
 
-task = "ta3"
-impact_task = "ic4"
-
 # Koordinaten und Richtungen definieren
-x, y = np.meshgrid(np.arange(0.0, 1.0, .05), np.arange(0.0, 1.0, .05))
 z = np.zeros_like(x)
 u = np.zeros_like(x)
 v = np.zeros_like(x)
@@ -105,12 +101,7 @@ ax2.axis('equal')
 fig2.tight_layout()
 ax2.set_title("Impact Task")
 
-
-task = "ta3"
-impact_task = "ic4"
-
 # Koordinaten und Richtungen definieren
-x, y = np.meshgrid(np.arange(0.0, 1.0, .05), np.arange(0.0, 1.0, .05))
 z = np.zeros_like(x)
 u = np.zeros_like(x)
 v = np.zeros_like(x)
@@ -152,12 +143,7 @@ ax3.axis('equal')
 fig3.tight_layout()
 ax3.set_title("NAIL")
 
-
-task = "ta3"
-impact_task = "ic4"
-
 # Koordinaten und Richtungen definieren
-x, y = np.meshgrid(np.arange(0.0, 1.0, .05), np.arange(0.0, 1.0, .05))
 z = np.zeros_like(x)
 u = np.zeros_like(x)
 v = np.zeros_like(x)
