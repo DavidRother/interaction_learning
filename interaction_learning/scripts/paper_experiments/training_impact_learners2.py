@@ -41,7 +41,7 @@ gamma = 0.5
 target_update_interval = 1000
 memory_size = 50000
 
-num_epochs = 300
+num_epochs = 500
 
 with open("impact_learner/all_ego_task.agent", "rb") as input_file:
     interaction_agent = pickle.load(input_file)
@@ -56,6 +56,7 @@ ep_rews = {}
 eval_scores = {}
 
 for impact_task, task in zip(impact_tasks, tasks):
+    print(f"Training: {[impact_task, task]}")
 
     env = parallel_env(num_agents=num_agents, agent_position_generator=agent_position_generator,
                        agent_reward=[impact_task, task],
@@ -116,6 +117,6 @@ for impact_task, task in zip(impact_tasks, tasks):
     eval_scores[task] = evaluation_scores
 
 stats = {"ep_rews": ep_rews, "eval_scores": eval_scores}
-with open("stats/training_impact_learners2.stats", 'wb') as outp:  # Overwrites any existing file.
+with open("stats/training_impact_learners2_longer_train.stats", 'wb') as outp:  # Overwrites any existing file.
     pickle.dump(stats, outp, pickle.HIGHEST_PROTOCOL)
-interaction_agent.save_agent("impact_learner/all_ego_and_impact_task.agent")
+interaction_agent.save_agent("impact_learner/all_ego_and_impact_task_longer_train.agent")

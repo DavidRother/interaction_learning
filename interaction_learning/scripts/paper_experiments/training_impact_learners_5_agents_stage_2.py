@@ -41,7 +41,7 @@ gamma = 0.5
 target_update_interval = 1000
 memory_size = 50000
 
-num_epochs = 200
+num_epochs = 300
 
 with open("impact_learner/all_ego_task_5_agents.agent", "rb") as input_file:
     interaction_agent = pickle.load(input_file)

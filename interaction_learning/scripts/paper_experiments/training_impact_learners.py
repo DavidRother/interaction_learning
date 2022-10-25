@@ -34,15 +34,15 @@ env = parallel_env(num_agents=num_agents, agent_position_generator=agent_positio
 obs_dim = env.observation_spaces["player_0"].shape[0]
 obs_dim_impact = 8
 n_actions = env.action_spaces["player_0"].n
-task_alpha = 0.02
-impact_alpha = 0.02
+task_alpha = 0.04
+impact_alpha = 0.04
 batch_size = 32
 gamma = 0.50
 target_update_interval = 1000
 memory_size = 50000
 action_alignment = False
 
-num_epochs = 600
+num_epochs = 400
 
 interaction_agent = ParticleInteractionAgent(obs_dim, obs_dim_impact, n_actions, task_alpha, impact_alpha,
                                              action_alignment, batch_size, gamma, target_update_interval,

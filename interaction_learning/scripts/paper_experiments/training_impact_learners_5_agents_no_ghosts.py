@@ -37,8 +37,8 @@ env = parallel_env(num_agents=num_agents, agent_position_generator=agent_positio
 obs_dim = env.observation_spaces["player_0"].shape[0]
 obs_dim_impact = 8
 n_actions = env.action_spaces["player_0"].n
-task_alpha = 0.05
-impact_alpha = 0.05
+task_alpha = 0.02
+impact_alpha = 0.02
 batch_size = 32
 gamma = 0.5
 target_update_interval = 1000

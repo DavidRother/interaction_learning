@@ -47,9 +47,13 @@ class SoftAgent:
         return loss.cpu().item()
 
     def select_action(self, state):
+        if not isinstance(state, torch.Tensor):
+            state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        state = self.transform_state(state)
         return self.model.select_action(state)
 
     def get_q(self, state):
+        state = self.transform_state(state)
         return self.model(state)
 
     def get_v(self, q):
@@ -57,5 +61,10 @@ class SoftAgent:
 
     def get_dist(self, q):
         return self.model.get_dist(q)
+
+    def transform_state(self, state):
+        state[:, 4:self.obs_dim] = 0
+        return state
+
 
 

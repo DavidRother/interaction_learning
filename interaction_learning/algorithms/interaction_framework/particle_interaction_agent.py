@@ -110,6 +110,7 @@ class ParticleInteractionAgent:
 
             weights = torch.FloatTensor([1./(1 + len(q_interactions))] * (1 + len(q_interactions)))
             if self.action_alignment:
+                q_values = [q_task] + [q for q in q_interactions]
                 dist_task = self.task_models[active_task[0]].get_dist(q_task)
                 dist_interactions = [self.interaction_models[inter].get_dist(q)
                                      for inter, q in zip(active_interactions, q_interactions)]
@@ -119,7 +120,9 @@ class ParticleInteractionAgent:
                 support = len(dists[0])
                 linear_entropies = [np.power(support, ent) / support for ent in entropies]
                 linear_r_ent = [np.power(support, ent) / support for ent in r_ent]
-                ent_weights = torch.Tensor([l_ent * l_r_ent for l_ent, l_r_ent in zip(linear_entropies, linear_r_ent)])
+                q_weights = [torch.sum(q) / torch.sum(sum(q_values)) for q in q_values]
+                ent_weights = torch.Tensor([l_ent * l_r_ent / q_weight for l_ent, l_r_ent, q_weight in
+                                            zip(linear_entropies, linear_r_ent, q_weights)])
                 weights = ent_weights / sum(ent_weights)
             q_values = [q_task] + [q for q in q_interactions]
             comb_q = []

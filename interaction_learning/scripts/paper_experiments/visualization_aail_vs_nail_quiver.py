@@ -24,6 +24,11 @@ env = parallel_env(num_agents=num_agents, agent_position_generator=agent_positio
 
 obs = env.reset()
 p_obs = obs["player_0"]
+# p_obs[4] = 0.0
+# p_obs[5] = 0.0
+# p_obs[6] = 0.0
+# p_obs[7] = 0.0
+print(p_obs)
 
 with open("impact_learner/all_ego_and_impact_task.agent", "rb") as input_file:
     interaction_agent = pickle.load(input_file)
@@ -34,17 +39,17 @@ with open(f"impact_learner/all_ego_task.agent", "rb") as input_file:
 with open(f"impact_learner/joint_learner_mis_goals.agent", "rb") as input_file:
     joint_agent = pickle.load(input_file)
     
-    
-<<<<<<< HEAD
-task = "ta0"
-impact_task = "ia0"
-=======
-task = "ta"
-impact_task = "ie3"
->>>>>>> 74cca5142aaa3268216250ca2ea21b68b296fc30
+
+task = "ta2"
+impact_task = "ib1"
+
+fontsize = 24
 
 # Koordinaten und Richtungen definieren
-x, y = np.meshgrid(np.arange(0.0, 1.0, .05), np.arange(0.0, 1.0, .05))
+start = 0.0
+end = 1.0
+step = 0.1
+x, y = np.meshgrid(np.arange(start, end + step, step), np.arange(start, end + step, step))
 z = np.zeros_like(x)
 u = np.zeros_like(x)
 v = np.zeros_like(x)
@@ -60,23 +65,15 @@ for a in range(x.shape[0]):
         u[a, b] = dist_task.data[0, 1].item() - dist_task.data[0, 3].item()
         v[a, b] = dist_task.data[0, 2].item() - dist_task.data[0, 4].item()
 
-
-fig1, ax1 = plt.subplots()
+fig, axs = plt.subplots(2, 2)
 # Quiver-Diagramm erstellen
-ax1.quiver(x, y, u, v)
-ax1.set_xlim([0, 1])
-ax1.set_ylim([0, 1])
-ax1.margins(y=0)
-ax1.margins(x=0)
+axs[0, 0].quiver(x, y, u, v, angles='xy')
+axs[0, 0].axis([0, 1, 0, 1])
+axs[0, 0].invert_yaxis()
 # ax.set(xlim=(0, 1), ylim=(0, 1))
-ax1.axis('equal')
-fig1.tight_layout()
-ax1.set_title("Ego Task")
+axs[0, 0].axis('equal')
+axs[0, 0].set_title("Ego Task", fontsize=fontsize)
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 74cca5142aaa3268216250ca2ea21b68b296fc30
 # Koordinaten und Richtungen definieren
 z = np.zeros_like(x)
 u = np.zeros_like(x)
@@ -98,17 +95,13 @@ for a in range(x.shape[0]):
         v[a, b] = dist.data[0, 2].item() - dist.data[0, 4].item()
 
 
-fig2, ax2 = plt.subplots()
 # Quiver-Diagramm erstellen
-ax2.quiver(x, y, u, v)
-ax2.set_xlim([0, 1])
-ax2.set_ylim([0, 1])
-ax2.margins(y=0)
-ax2.margins(x=0)
+axs[0, 1].quiver(x, y, u, v, angles='xy')
+axs[0, 1].axis([0, 1, 0, 1])
+axs[0, 1].invert_yaxis()
 # ax.set(xlim=(0, 1), ylim=(0, 1))
-ax2.axis('equal')
-fig2.tight_layout()
-ax2.set_title("Impact Task")
+axs[0, 1].axis('equal')
+axs[0, 1].set_title("Impact Task", fontsize=fontsize)
 
 # Koordinaten und Richtungen definieren
 z = np.zeros_like(x)
@@ -140,17 +133,13 @@ for a in range(x.shape[0]):
         v[a, b] = dist.data[0, 2].item() - dist.data[0, 4].item()
 
 
-fig3, ax3 = plt.subplots()
 # Quiver-Diagramm erstellen
-ax3.quiver(x, y, u, v)
-ax3.set_xlim([0, 1])
-ax3.set_ylim([0, 1])
-ax3.margins(y=0)
-ax3.margins(x=0)
+axs[1, 0].quiver(x, y, u, v, angles='xy')
+axs[1, 0].axis([0, 1, 0, 1])
+axs[1, 0].invert_yaxis()
 # ax.set(xlim=(0, 1), ylim=(0, 1))
-ax3.axis('equal')
-fig3.tight_layout()
-ax3.set_title("NAIL")
+axs[1, 0].axis('equal')
+axs[1, 0].set_title("NAIL", fontsize=fontsize)
 
 # Koordinaten und Richtungen definieren
 z = np.zeros_like(x)
@@ -179,7 +168,7 @@ for a in range(x.shape[0]):
             linear_entropies = [np.power(support, ent) / support for ent in entropies]
             linear_r_ent = [np.power(support, ent) / support for ent in r_ent]
             q_weights = [torch.sum(q)/torch.sum(sum(q_values)) for q in q_values]
-            ent_weights = torch.Tensor([l_ent * l_r_ent for l_ent, l_r_ent in zip(linear_entropies, linear_r_ent)])
+            ent_weights = torch.Tensor([l_ent * l_r_ent / q_weight for l_ent, l_r_ent, q_weight in zip(linear_entropies, linear_r_ent, q_weights)])
             weights = ent_weights / sum(ent_weights)
             comb_q = []
             for q, w in zip(q_values, weights):
@@ -187,29 +176,24 @@ for a in range(x.shape[0]):
             combined_q = torch.Tensor(sum(comb_q))
             combined_v = interaction_agent.task_models[task].get_v(combined_q)
 
-            dist = torch.exp((combined_q - combined_v) / 0.01)
+            dist = torch.exp((combined_q - combined_v) / interaction_agent.task_alpha)
             dist /= torch.sum(dist)
 
             u[a, b] = dist.data[0, 1].item() - dist.data[0, 3].item()
             v[a, b] = dist.data[0, 2].item() - dist.data[0, 4].item()
 
-            if 0.349 <= x[a][b] <= 0.351:
-                if 0.349 <= y[a][b] <= 0.351:
-                    print("debug")
 
-
-fig4, ax4 = plt.subplots()
 # Quiver-Diagramm erstellen
-ax4.quiver(x, y, u, v)
-ax4.set_xlim([0, 1])
-ax4.set_ylim([0, 1])
-ax4.margins(y=0)
-ax4.margins(x=0)
+q4 = axs[1, 1].quiver(x, y, u, v, angles='xy')
+axs[1, 1].axis([0, 1, 0, 1])
+axs[1, 1].invert_yaxis()
+# axs[1, 1].quiverkey(q4, X=0.0, Y=1.0, U=10,
+#              label='quiver(X, Y, U, V), invert_yaxis()', labelpos='E')
+# axs[1, 1].margins(y=0)
+# axs[1, 1].margins(x=0)
 # ax.set(xlim=(0, 1), ylim=(0, 1))
-ax4.axis('equal')
-fig4.tight_layout()
-
-ax4.set_title("AAIL")
+axs[1, 1].axis('equal')
+axs[1, 1].set_title("AAIL", fontsize=fontsize)
 
 # Quiver-Diagramm anzeigen
 plt.show()

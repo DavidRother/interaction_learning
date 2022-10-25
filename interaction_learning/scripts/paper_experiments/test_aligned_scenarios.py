@@ -33,7 +33,7 @@ eval_scores = {alg: {} for alg in algorithms}
 num_eval = 100
 
 
-agent_position_generator = AgentPositionGenerator(num_eval * 10)
+agent_position_generator = AgentPositionGenerator(num_eval * 10, x_min=0.2, x_max=0.8, y_min=0.2, y_max=0.8)
 agent_reward = ["x"]
 max_steps = 1000
 ghost_agents = 0
@@ -165,5 +165,5 @@ for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
 ########################################################################################################################
 
 stats = {"eval_scores": eval_scores}
-with open("stats/test_aligned_scenarios.stats", 'wb') as outp:  # Overwrites any existing file.
+with open("stats/test_aligned_scenarios2.stats", 'wb') as outp:  # Overwrites any existing file.
     pickle.dump(stats, outp, pickle.HIGHEST_PROTOCOL)

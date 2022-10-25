@@ -19,9 +19,13 @@ impact_tasks = ["i" + x + y for x in x_tasks for y in y_tasks] + ["i" + x for x 
 impact_tasks = [impact_tasks[0]]
 device = torch.device("cpu")
 
-aligned_task_1 = ["ta2", "te1", "tb2", "tc4", "td3"]
-impact_task_1 = ["ib3", "ic4", "ia0", "id2", "ie1"]
-aligned_task_2 = ["tb3", "tc4", "ta0", "td2", "te1"]
+aligned_task_1 = ["ta2"]
+impact_task_1 = ["ib3"]
+aligned_task_2 = ["tb3"]
+
+# aligned_task_1 = ["ta2", "te1", "tb2", "tc4", "td3"]
+# impact_task_1 = ["ib3", "ic4", "ia0", "id2", "ie1"]
+# aligned_task_2 = ["tb3", "tc4", "ta0", "td2", "te1"]
 
 algorithms = ["action_aligned_interaction_learner", "non_aligned_interaction_learner",
               "selfish_task_solver", "joint_learner"]
@@ -30,8 +34,8 @@ eval_scores = {alg: {} for alg in algorithms}
 
 # 0 is do nothing 1 is move right 2 is down 3 is left 4 is up
 
-num_eval = 100
-
+num_eval = 20
+# , x_min=0.4, x_max=0.6, y_min=0.4, y_max=0.6
 agent_position_generator = AgentPositionGenerator(num_eval * 10)
 agent_reward = ["x"]
 max_steps = 1000
@@ -53,7 +57,7 @@ memory_size = 50000
 
 num_epochs = 200
 
-with open("impact_learner/all_ego_and_impact_task.agent", "rb") as input_file:
+with open("impact_learner/all_ego_and_impact_task_longer_train.agent", "rb") as input_file:
     interaction_agent = pickle.load(input_file)
 
 with open(f"impact_learner/all_ego_task.agent", "rb") as input_file:
@@ -76,6 +80,7 @@ algorithm = "action_aligned_interaction_learner"
 
 agent_position_generator.reset()
 
+print(algorithm)
 for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
 
     env = parallel_env(num_agents=num_agents, agent_position_generator=agent_position_generator,
@@ -99,6 +104,7 @@ algorithm = "non_aligned_interaction_learner"
 
 agent_position_generator.reset()
 
+print(algorithm)
 for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
 
     env = parallel_env(num_agents=num_agents, agent_position_generator=agent_position_generator,
@@ -121,6 +127,7 @@ algorithm = "selfish_task_solver"
 
 agent_position_generator.reset()
 
+print(algorithm)
 for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
 
     env = parallel_env(num_agents=num_agents, agent_position_generator=agent_position_generator,
@@ -143,6 +150,7 @@ algorithm = "joint_learner"
 
 agent_position_generator.reset()
 
+print(algorithm)
 for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
 
     env = parallel_env(num_agents=num_agents, agent_position_generator=agent_position_generator,
@@ -161,5 +169,5 @@ for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
 ########################################################################################################################
 
 stats = {"eval_scores": eval_scores}
-with open("stats/test_misaligned_scenarios.stats", 'wb') as outp:  # Overwrites any existing file.
+with open("stats/test_misaligned_scenarios3.stats", 'wb') as outp:  # Overwrites any existing file.
     pickle.dump(stats, outp, pickle.HIGHEST_PROTOCOL)

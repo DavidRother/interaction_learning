@@ -28,7 +28,7 @@ agent_position_generator = lambda: [np.asarray([np.random.uniform(0, 1), np.rand
                                     np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)])]
 
 
-agent_reward = [f"ta0", "tc4"]
+agent_reward = [f"ta1", "tb1"]
 max_steps = 1000
 ghost_agents = 0
 render = True
@@ -39,20 +39,31 @@ env = parallel_env(num_agents=num_agents, agent_position_generator=agent_positio
 # temperature = torch.Tensor(alpha)
 alpha = 0.1
 impact_alpha = 0.3
-with open(f'ppo_learner/ppo_single_learner_te2.agent', "rb") as output_file:
-    ppo_agent = pickle.load(output_file)
+with open("impact_learner/all_ego_and_impact_task.agent", "rb") as input_file:
+    interaction_agent = pickle.load(input_file)
 
 with open(f"impact_learner/all_ego_task.agent", "rb") as input_file:
     other_agent = pickle.load(input_file)
 
+with open(f"impact_learner/joint_learner_mis_goals.agent", "rb") as input_file:
+    joint_agent = pickle.load(input_file)
+
+interaction_agent.switch_mode(ParticleInteractionAgent.INFERENCE)
+active_tasks = [agent_reward[0], agent_reward[1].replace("t", "i")]
+interaction_agent.switch_active_tasks(active_tasks)
 other_agent.switch_mode(ParticleInteractionAgent.INFERENCE)
-other_agent.switch_active_tasks([agent_reward[0]])
+other_agent.switch_active_tasks([agent_reward[1]])
 
 state = env.reset()
 episode_reward = 0
 for time_steps in range(max_steps):
-    action = other_agent.select_action(state["player_0"])
-    action_2 = 0
+    obs = state["player_0"]
+    obs[4] = 0.0
+    obs[5] = 0.0
+    obs[6] = 0.0
+    obs[7] = 0.0
+    action = interaction_agent.select_action(state["player_0"], 0, [1])
+    action_2 = other_agent.select_action(state["player_1"])
     actions = {"player_0": action, "player_1": action_2}
     next_state, reward, done, _ = env.step(actions)
     episode_reward += reward["player_0"]

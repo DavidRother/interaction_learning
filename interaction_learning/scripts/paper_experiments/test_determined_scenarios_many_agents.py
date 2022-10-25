@@ -38,7 +38,7 @@ eval_scores = {alg: {} for alg in algorithms}
 
 num_eval = 100
 
-agent_position_generator = AgentPositionGenerator(num_eval * 10, 5)
+agent_position_generator = AgentPositionGenerator(num_eval * 10, num_agents=5, x_min=0.4, x_max=0.6, y_min=0.4, y_max=0.6)
 agent_reward = ["x"]
 max_steps = 1000
 ghost_agents = 0

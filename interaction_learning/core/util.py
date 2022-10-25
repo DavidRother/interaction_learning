@@ -13,8 +13,8 @@ def make_deterministic(random_seed):
 
 class AgentPositionGenerator:
 
-    def __init__(self, num_pos, num_agents=2, rand=False):
-        self.agent_positions = [[np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)])
+    def __init__(self, num_pos, num_agents=2, x_min=0, x_max=1, y_min=0, y_max=1):
+        self.agent_positions = [[np.asarray([np.random.uniform(x_min, x_max), np.random.uniform(y_min, y_max)])
                                  for i in range(num_agents)]
                                 for _ in range(num_pos)]
         self.pointer = 0
@@ -26,3 +26,4 @@ class AgentPositionGenerator:
 
     def reset(self):
         self.pointer = 0
+

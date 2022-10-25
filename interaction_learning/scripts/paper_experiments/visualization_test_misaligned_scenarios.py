@@ -3,7 +3,7 @@ from matplotlib import rc, font_manager
 import numpy as np
 import pickle
 
-with open("stats/test_misaligned_scenarios.stats", 'rb') as outp:  # Overwrites any existing file.
+with open("stats/test_misaligned_scenarios3.stats", 'rb') as outp:  # Overwrites any existing file.
     obj = pickle.load(outp)
 
 mean_aligned_interaction_learner_team = []
@@ -19,14 +19,18 @@ mean_joint_learner_team = []
 mean_joint_learner_1 = []
 mean_joint_learner_2 = []
 
-aligned_task_1 = ["ta2", "te1", "tb2", "tc4", "td3"]
-impact_task_1 = ["ib3", "ic4", "ia0", "id2", "ie1"]
-aligned_task_2 = ["tb3", "tc4", "ta0", "td2", "te1"]
+aligned_task_1 = ["ta2"]
+impact_task_1 = ["ib3"]
+aligned_task_2 = ["tb3"]
+
+# aligned_task_1 = ["ta2", "te1", "tb2", "tc4", "td3"]
+# impact_task_1 = ["ib3", "ic4", "ia0", "id2", "ie1"]
+# aligned_task_2 = ["tb3", "tc4", "ta0", "td2", "te1"]
 
 algorithms = ["action_aligned_interaction_learner", "non_aligned_interaction_learner",
               "selfish_task_solver", "joint_learner"]
 
-num_evals = 10
+num_evals = 20
 
 eval_scores = obj["eval_scores"]
 
