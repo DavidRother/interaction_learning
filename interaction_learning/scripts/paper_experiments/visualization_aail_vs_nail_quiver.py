@@ -6,6 +6,22 @@ import numpy as np
 import pickle
 import torch
 
+
+SMALL_SIZE = 20
+MEDIUM_SIZE = 25
+BIGGER_SIZE = 30
+
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)
+
+make_deterministic(1)
+
+
 plt.style.use("seaborn-whitegrid")
 
 
@@ -30,7 +46,7 @@ p_obs = obs["player_0"]
 # p_obs[7] = 0.0
 print(p_obs)
 
-with open("impact_learner/all_ego_and_impact_task.agent", "rb") as input_file:
+with open("impact_learner/all_ego_and_impact_task_longer_train.agent", "rb") as input_file:
     interaction_agent = pickle.load(input_file)
 
 with open(f"impact_learner/all_ego_task.agent", "rb") as input_file:
@@ -40,8 +56,8 @@ with open(f"impact_learner/joint_learner_mis_goals.agent", "rb") as input_file:
     joint_agent = pickle.load(input_file)
     
 
-task = "ta2"
-impact_task = "ib1"
+task = "ta1"
+impact_task = "ib2"
 
 fontsize = 24
 
@@ -194,6 +210,8 @@ axs[1, 1].invert_yaxis()
 # ax.set(xlim=(0, 1), ylim=(0, 1))
 axs[1, 1].axis('equal')
 axs[1, 1].set_title("AAIL", fontsize=fontsize)
+
+plt.savefig("plots/quiver_all.svg")
 
 # Quiver-Diagramm anzeigen
 plt.show()
