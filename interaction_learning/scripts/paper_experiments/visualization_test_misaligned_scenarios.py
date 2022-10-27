@@ -3,6 +3,18 @@ from matplotlib import rc, font_manager
 import numpy as np
 import pickle
 
+SMALL_SIZE = 30
+MEDIUM_SIZE = 35
+BIGGER_SIZE = 35
+
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)
+
 with open("stats/test_misaligned_scenarios3.stats", 'rb') as outp:  # Overwrites any existing file.
     obj = pickle.load(outp)
 
@@ -132,15 +144,14 @@ plt.errorbar(x + width, means_2, yerr=std_2, fmt="o", color="k")
 # ax.set_ylabel('Negative Rewards', fontsize=30, fontname=fontname)
 # ax.set_title('Accumulated Negative Rewards Misaligned Scenarios')
 ax.set_xticks(x, labels, fontsize=30, fontname=fontname)
-plt.yticks(fontsize=12)
-ax.legend(fontsize=18)
+ax.legend(fontsize=23)
 
 # ax.bar_label(rects1, padding=3)
 # ax.bar_label(rects2, padding=3)
 # ax.bar_label(rects3, padding=3)
 
 fig.tight_layout()
-
+plt.savefig("plots/test_misaligned_scenarios.svg")
 plt.show()
 
 print("done")

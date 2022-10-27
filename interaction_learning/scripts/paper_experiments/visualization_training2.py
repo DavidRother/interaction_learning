@@ -24,10 +24,10 @@ y_tasks = ["0", "1", "2", "3", "4"]
 tasks = ["t" + x + y for x in x_tasks for y in y_tasks] + ["t" + x for x in x_tasks] + ["t" + y for y in y_tasks]
 impact_tasks = ["i" + x + y for x in x_tasks for y in y_tasks] + ["i" + x for x in x_tasks] + ["i" + y for y in y_tasks]
 
-with open("stats/training_impact_learners.stats", 'rb') as outp:  # Overwrites any existing file.
+with open("stats/training_impact_learners2_longer_train.stats", 'rb') as outp:  # Overwrites any existing file.
     obj = pickle.load(outp)
 
-num_steps = 600
+num_steps = 500
 
 mean_train = []
 std_train = []
@@ -50,13 +50,13 @@ plt.plot(length_train, mean_train, label="Episode Mean Score")
 
 plt.fill_between(length_train, mean_train - std_train, mean_train + std_train, alpha=0.5, linewidth=1.5)
 
-plt.title("Task Training")
+plt.title("Interaction Training")
 plt.xlabel("Episode #")
 plt.ylabel("Reward")
 plt.legend(loc="lower right")
 plt.tight_layout()
 
-plt.savefig("plots/training_tasks.svg")
+plt.savefig("plots/training_interaction_tasks.svg")
 
 plt.show()
 
