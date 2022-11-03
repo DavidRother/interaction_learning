@@ -24,6 +24,15 @@ def calc_relative_entropy(dist1, dist2):
     return my_sum
 
 
+def calc_extropy(dist):
+    my_sum = 0
+    for p in dist:
+        p = 1 - p
+        if p > 0:
+            my_sum += p * np.log(p) / np.log(len(dist))
+    return - my_sum
+
+
 a = calc_entropy(act_dist)
 # print(calc_entropy(act_dist))
 print(calc_relative_entropy(act_dist, act_dist))
@@ -37,6 +46,10 @@ relative_entropies = [calc_relative_entropy(act_dist, act_dist4), calc_relative_
 
 impact_entropies = [calc_entropy(act_dist), calc_entropy(act_dist2), calc_entropy(act_dist3), calc_entropy(act_dist5),
                     calc_entropy(act_dist6)]
+
+task_extropy = calc_extropy(act_dist4)
+impact_extropies = [calc_extropy(act_dist), calc_extropy(act_dist2), calc_extropy(act_dist3), calc_extropy(act_dist5),
+                    calc_extropy(act_dist6)]
 
 unnormalized_task_weight = (1 - task_entropy)
 relative_entropy_task_weight = sum(relative_entropies) / len(relative_entropies)
