@@ -145,6 +145,15 @@ class ParticleInteractionAgent:
         return - my_sum
 
     @staticmethod
+    def calc_extropy(dist):
+        my_sum = 0
+        for p in dist:
+            p = 1 - p
+            if p > 0:
+                my_sum += p * np.log(p) / np.log(len(dist))
+        return - my_sum
+
+    @staticmethod
     def calc_relative_entropy(dist1, dist2):
         my_sum = 0
         for p, q in zip(dist1, dist2):

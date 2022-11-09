@@ -50,10 +50,10 @@ plt.plot(length_train, mean_train, label="Episode Mean Score")
 
 plt.fill_between(length_train, mean_train - std_train, mean_train + std_train, alpha=0.5, linewidth=1.5)
 
-plt.title("Task Training")
+plt.title("Task Training", fontsize=35)
 plt.xlabel("Episode #")
 plt.ylabel("Reward")
-plt.legend(loc="lower right")
+plt.legend(loc="center right")
 plt.tight_layout()
 
 plt.savefig("plots/training_tasks.svg")

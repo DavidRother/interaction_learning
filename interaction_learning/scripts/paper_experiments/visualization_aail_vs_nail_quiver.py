@@ -2,6 +2,7 @@ from partigames.environment.zoo_env import parallel_env
 from interaction_learning.core.util import make_deterministic, AgentPositionGenerator
 from torch.distributions import Categorical
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import numpy as np
 import pickle
 import torch
@@ -59,6 +60,31 @@ with open(f"impact_learner/joint_learner_mis_goals.agent", "rb") as input_file:
 task = "ta1"
 impact_task = "ib2"
 
+fig, axs = plt.subplots(2, 2)
+
+rect = patches.Rectangle((0.0, 0.2), 0.2, 0.2, linewidth=0, edgecolor='r', facecolor='blue', alpha=0.7)
+rect2 = patches.Rectangle((0.6, 0.8), 0.2, 0.2, linewidth=2, edgecolor='purple', facecolor='none')
+axs[1, 1].add_patch(rect)
+axs[1, 1].add_patch(rect2)
+
+rect3 = patches.Rectangle((0.0, 0.2), 0.2, 0.2, linewidth=0, edgecolor='r', facecolor='blue', alpha=0.7)
+rect4 = patches.Rectangle((0.6, 0.8), 0.2, 0.2, linewidth=2, edgecolor='purple', facecolor='none')
+
+axs[0, 0].add_patch(rect3)
+axs[0, 0].add_patch(rect4)
+
+rect5 = patches.Rectangle((0.0, 0.2), 0.2, 0.2, linewidth=0, edgecolor='r', facecolor='blue', alpha=0.7)
+rect6 = patches.Rectangle((0.6, 0.8), 0.2, 0.2, linewidth=2, edgecolor='purple', facecolor='none')
+
+axs[1, 0].add_patch(rect5)
+axs[1, 0].add_patch(rect6)
+
+rect7 = patches.Rectangle((0.0, 0.2), 0.2, 0.2, linewidth=0, edgecolor='r', facecolor='blue', alpha=0.7)
+rect8 = patches.Rectangle((0.6, 0.8), 0.2, 0.2, linewidth=2, edgecolor='purple', facecolor='none')
+
+axs[0, 1].add_patch(rect7)
+axs[0, 1].add_patch(rect8)
+
 fontsize = 24
 
 # Koordinaten und Richtungen definieren
@@ -81,9 +107,8 @@ for a in range(x.shape[0]):
         u[a, b] = dist_task.data[0, 1].item() - dist_task.data[0, 3].item()
         v[a, b] = dist_task.data[0, 2].item() - dist_task.data[0, 4].item()
 
-fig, axs = plt.subplots(2, 2)
 # Quiver-Diagramm erstellen
-axs[0, 0].quiver(x, y, u, v, angles='xy')
+axs[0, 0].quiver(x, y, u, v, angles='xy', headwidth=4)
 axs[0, 0].axis([0, 1, 0, 1])
 axs[0, 0].invert_yaxis()
 # ax.set(xlim=(0, 1), ylim=(0, 1))
@@ -112,12 +137,12 @@ for a in range(x.shape[0]):
 
 
 # Quiver-Diagramm erstellen
-axs[0, 1].quiver(x, y, u, v, angles='xy')
+axs[0, 1].quiver(x, y, u, v, angles='xy', headwidth=4)
 axs[0, 1].axis([0, 1, 0, 1])
 axs[0, 1].invert_yaxis()
 # ax.set(xlim=(0, 1), ylim=(0, 1))
 axs[0, 1].axis('equal')
-axs[0, 1].set_title("Impact Task", fontsize=fontsize)
+axs[0, 1].set_title("Interaction Task", fontsize=fontsize)
 
 # Koordinaten und Richtungen definieren
 z = np.zeros_like(x)
@@ -150,7 +175,7 @@ for a in range(x.shape[0]):
 
 
 # Quiver-Diagramm erstellen
-axs[1, 0].quiver(x, y, u, v, angles='xy')
+axs[1, 0].quiver(x, y, u, v, angles='xy', headwidth=4)
 axs[1, 0].axis([0, 1, 0, 1])
 axs[1, 0].invert_yaxis()
 # ax.set(xlim=(0, 1), ylim=(0, 1))
@@ -200,7 +225,7 @@ for a in range(x.shape[0]):
 
 
 # Quiver-Diagramm erstellen
-q4 = axs[1, 1].quiver(x, y, u, v, angles='xy')
+q4 = axs[1, 1].quiver(x, y, u, v, angles='xy', headwidth=4)
 axs[1, 1].axis([0, 1, 0, 1])
 axs[1, 1].invert_yaxis()
 # axs[1, 1].quiverkey(q4, X=0.0, Y=1.0, U=10,
@@ -210,6 +235,8 @@ axs[1, 1].invert_yaxis()
 # ax.set(xlim=(0, 1), ylim=(0, 1))
 axs[1, 1].axis('equal')
 axs[1, 1].set_title("AAIL", fontsize=fontsize)
+
+
 
 plt.savefig("plots/quiver_all.svg")
 
