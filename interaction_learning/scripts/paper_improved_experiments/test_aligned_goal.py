@@ -11,17 +11,11 @@ import pickle
 
 
 make_deterministic(1)
-
-x_tasks = ["a", "b", "c", "d", "e"]
-y_tasks = ["0", "1", "2", "3", "4"]
-tasks = ["t" + x + y for x in x_tasks for y in y_tasks] + ["t" + x for x in x_tasks] + ["t" + y for y in y_tasks]
-impact_tasks = ["i" + x + y for x in x_tasks for y in y_tasks] + ["i" + x for x in x_tasks] + ["i" + y for y in y_tasks]
-impact_tasks = [impact_tasks[0]]
 device = torch.device("cpu")
 
-aligned_task_1 = ["ta", "te", "tb", "tc", "td"]
-impact_task_1 = ["ie0", "ia1", "id2", "ic4", "ib3"]
-aligned_task_2 = ["te0", "ta1", "td2", "tc4", "tb3"]
+aligned_task_1 = ["ta"]
+impact_task_1 = ["ie3"]
+aligned_task_2 = ["te0"]
 
 algorithms = ["action_aligned_interaction_learner", "non_aligned_interaction_learner",
               "selfish_task_solver", "joint_learner"]
@@ -30,7 +24,7 @@ eval_scores = {alg: {} for alg in algorithms}
 
 # 0 is do nothing 1 is move right 2 is down 3 is left 4 is up
 
-num_eval = 100
+num_eval = 10000
 
 
 agent_position_generator = AgentPositionGenerator(num_eval * 10, x_min=0.2, x_max=0.8, y_min=0.2, y_max=0.8)
@@ -54,13 +48,13 @@ memory_size = 50000
 
 num_epochs = 200
 
-with open("impact_learner/all_ego_and_impact_task.agent", "rb") as input_file:
+with open("../paper_experiments/impact_learner/all_ego_and_impact_task.agent", "rb") as input_file:
     interaction_agent = pickle.load(input_file)
 
-with open(f"impact_learner/all_ego_task.agent", "rb") as input_file:
+with open(f"../paper_experiments/impact_learner/all_ego_task.agent", "rb") as input_file:
     other_agent = pickle.load(input_file)
 
-with open(f"impact_learner/joint_learner.agent", "rb") as input_file:
+with open(f"../paper_experiments/impact_learner/joint_learner.agent", "rb") as input_file:
     joint_agent = pickle.load(input_file)
 
 interaction_agent.switch_mode(ParticleInteractionAgent.INFERENCE)
@@ -90,6 +84,8 @@ for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
     evaluation_scores = [evaluate(env, num_eval, [interaction_agent, other_agent], kwargs_agents=kwargs_agents,
                                   render=render)]
     eval_scores[algorithm][t1 + i1 + t2] = evaluation_scores
+
+print("finished aail")
 
 ########################################################################################################################
 # Test Non aligned interaction learner #################################################################################

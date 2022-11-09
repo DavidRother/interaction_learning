@@ -158,9 +158,11 @@ for a in range(x.shape[0]):
         dist_task = interaction_agent.task_models[task].get_dist(q_task)
 
         q_interactions = [interaction_agent.interaction_models[impact_task].get_q(state, 0, 1)]
-        weights = torch.FloatTensor([1./(1 + len(q_interactions))] * (1 + len(q_interactions)))
+        # weights = torch.FloatTensor([1./(1 + len(q_interactions))] * (1 + len(q_interactions)))
 
         q_values = [q_task] + [q for q in q_interactions]
+        q_weights = torch.Tensor([torch.sum(q) / torch.sum(sum(q_values)) for q in q_values])
+        weights = q_weights / sum(q_weights)
         comb_q = []
         for q, w in zip(q_values, weights):
             comb_q.append(q * w.item())

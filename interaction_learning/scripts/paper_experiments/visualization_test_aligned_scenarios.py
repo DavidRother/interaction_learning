@@ -15,7 +15,7 @@ plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
 plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)
 
-with open("stats/test_aligned_scenarios.stats", 'rb') as outp:  # Overwrites any existing file.
+with open("stats/test_aligned_scenarios_after_submit.stats", 'rb') as outp:  # Overwrites any existing file.
     obj = pickle.load(outp)
 
 mean_aligned_interaction_learner_team = []
@@ -159,7 +159,7 @@ ax.legend(fontsize=23, loc='upper center', ncol=3, fancybox=True, shadow=True, m
 # ax.bar_label(rects3, padding=3)
 
 fig.tight_layout()
-plt.savefig("plots/test_aligned_scenarios.svg")
+plt.savefig("plots/test_aligned_scenarios123.svg")
 plt.show()
 
 print("done")
