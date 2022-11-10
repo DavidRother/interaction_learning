@@ -128,6 +128,10 @@ class ParticleInteractionAgent:
             comb_q = []
             for q, w in zip(q_values, weights):
                 comb_q.append(q*w.item())
+            else:
+                q_values = [q_task] + [q for q in q_interactions]
+                q_weights = torch.Tensor([torch.sum(q) / torch.sum(sum(q_values)) for q in q_values])
+                weights = q_weights / sum(q_weights)
             combined_q = torch.Tensor(sum(comb_q))
             combined_v = self.task_models[active_task[0]].get_v(combined_q)
 

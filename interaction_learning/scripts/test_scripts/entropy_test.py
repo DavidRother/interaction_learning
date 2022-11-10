@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 act_dist = [0.3, 0.15, 0.05, 0.35, 0.2]
 act_dist2 = [0.5, 0.1, 0.25, 0.05, 0.1]
@@ -6,6 +7,9 @@ act_dist3 = [0.7, 0.1, 0.05, 0.05, 0.1]
 act_dist4 = [0.7, 0.05, 0.05, 0.15, 0.05]
 act_dist5 = [0.2, 0.2, 0.2, 0.2, 0.2]
 act_dist6 = [1, 0, 0, 0, 0]
+
+q_values = torch.tensor([[-2.2829, -2.2790, -2.2675, -2.3077, -2.3209]])
+q_values2 = torch.tensor([[-2.2555, -2.2572, -2.2477, -2.2619, -2.3109]])
 
 
 def calc_entropy(dist):
@@ -33,7 +37,23 @@ def calc_extropy(dist):
     return - my_sum
 
 
-a = calc_entropy(act_dist)
+def get_value(q_value):
+    v = 0.04 * torch.logsumexp(q_value / 0.04, dim=1, keepdim=True)
+    return v
+
+
+def get_dist(q_value):
+    v = get_value(q_value)
+    dist = torch.exp((q_value - v) / 0.04)
+    dist = dist / torch.sum(dist)
+    return dist
+
+
+q_dist = get_dist(q_values).cpu().numpy().flatten()
+a = calc_entropy(q_dist)
+
+q_dist2 = get_dist(q_values2).cpu().numpy().flatten()
+b = calc_entropy(q_dist2)
 # print(calc_entropy(act_dist))
 print(calc_relative_entropy(act_dist, act_dist))
 # print(calc_relative_entropy(act_dist2, act_dist3))
