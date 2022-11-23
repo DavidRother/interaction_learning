@@ -15,7 +15,7 @@ plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
 plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)
 
-with open("stats/test_aligned_scenarios_after_submit.stats", 'rb') as outp:  # Overwrites any existing file.
+with open("stats/test_aligned_scenarios_after_submit5.stats", 'rb') as outp:  # Overwrites any existing file.
     obj = pickle.load(outp)
 
 mean_aligned_interaction_learner_team = []
@@ -38,12 +38,12 @@ std_joint_learner = []
 
 aligned_task_1 = ["ta"]
 impact_task_1 = ["ie3"]
-aligned_task_2 = ["te0"]
+aligned_task_2 = ["te3"]
 
 algorithms = ["action_aligned_interaction_learner", "non_aligned_interaction_learner",
               "selfish_task_solver", "joint_learner"]
 
-num_evals = 10000
+num_evals = 200
 
 eval_scores = obj["eval_scores"]
 

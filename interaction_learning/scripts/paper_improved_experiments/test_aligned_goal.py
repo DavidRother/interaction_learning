@@ -1,7 +1,7 @@
 from interaction_learning.algorithms.interaction_framework.particle_interaction_agent import ParticleInteractionAgent
 from interaction_learning.core.evaluation import evaluate
 from partigames.environment.zoo_env import parallel_env
-from interaction_learning.core.util import make_deterministic, AgentPositionGenerator
+from interaction_learning.core.util import make_deterministic, AgentPositionGenerator2
 import matplotlib.pyplot as plt
 from time import sleep
 import numpy as np
@@ -15,7 +15,7 @@ device = torch.device("cpu")
 
 aligned_task_1 = ["ta"]
 impact_task_1 = ["ie3"]
-aligned_task_2 = ["te0"]
+aligned_task_2 = ["te3"]
 
 algorithms = ["action_aligned_interaction_learner", "non_aligned_interaction_learner",
               "selfish_task_solver", "joint_learner"]
@@ -24,10 +24,10 @@ eval_scores = {alg: {} for alg in algorithms}
 
 # 0 is do nothing 1 is move right 2 is down 3 is left 4 is up
 
-num_eval = 10000
+num_eval = 200
 
-
-agent_position_generator = AgentPositionGenerator(num_eval * 10, x_min=0.2, x_max=0.8, y_min=0.2, y_max=0.8)
+pos_constraints = [[0.8, 1.0, 0.0, 1.0], [0.0, 1.0, 0.8, 1.0]]
+agent_position_generator = AgentPositionGenerator2(num_eval * 10, pos_constraints=pos_constraints)
 agent_reward = ["x"]
 max_steps = 1000
 ghost_agents = 0
@@ -84,8 +84,6 @@ for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
     evaluation_scores = [evaluate(env, num_eval, [interaction_agent, other_agent], kwargs_agents=kwargs_agents,
                                   render=render)]
     eval_scores[algorithm][t1 + i1 + t2] = evaluation_scores
-
-print("finished aail")
 
 ########################################################################################################################
 # Test Non aligned interaction learner #################################################################################
@@ -161,5 +159,5 @@ for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
 ########################################################################################################################
 
 stats = {"eval_scores": eval_scores}
-with open("stats/test_aligned_scenarios_after_submit.stats", 'wb') as outp:  # Overwrites any existing file.
+with open("stats/test_aligned_scenarios_after_submit5.stats", 'wb') as outp:  # Overwrites any existing file.
     pickle.dump(stats, outp, pickle.HIGHEST_PROTOCOL)
