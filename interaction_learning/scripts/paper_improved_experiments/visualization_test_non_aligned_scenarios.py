@@ -3,7 +3,6 @@ from time import sleep
 import numpy as np
 import pickle
 
-
 SMALL_SIZE = 20
 MEDIUM_SIZE = 25
 BIGGER_SIZE = 30
@@ -16,7 +15,7 @@ plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
 plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)
 
-with open("stats/test_aligned_scenarios_many_agents.stats", 'rb') as outp:  # Overwrites any existing file.
+with open("stats/test_misaligned_scenarios.stats", 'rb') as outp:  # Overwrites any existing file.
     obj = pickle.load(outp)
 
 mean_aligned_interaction_learner_team = []
@@ -37,82 +36,52 @@ std_non_aligned_interaction_learner = []
 std_selfish_task_solver = []
 std_joint_learner = []
 
-task_1 = ["ta2", "te1", "tb2", "tc4", "td3"]
-task_2 = ["ta0", "ta1", "ta2", "ta3", "ta4"]
-task_3 = ["tb2", "tb3", "tb4", "tb0", "tb1"]
-task_4 = ["tc4", "tc0", "tc1", "tc2", "tc3"]
-task_5 = ["te1", "td2", "te3", "td4", "te0"]
-
-impact_tasks_1 = [[t1.replace("t", "i"), t2.replace("t", "i"),
-                   t3.replace("t", "i"), t4.replace("t", "i")]
-                  for t1, t2, t3, t4 in zip(task_2, task_3, task_4, task_5)]
+aligned_task_1 = ["ta2"]
+impact_task_1 = ["ib3"]
+aligned_task_2 = ["tb3"]
 
 algorithms = ["action_aligned_interaction_learner", "non_aligned_interaction_learner",
               "selfish_task_solver", "joint_learner"]
 
-num_evals = 100
+num_evals = 200
 root_eval = np.sqrt(num_evals)
 
 eval_scores = obj["eval_scores"]
 
-for t1, t2, t3, t4, t5, i1 in zip(task_1, task_2, task_3, task_4, task_5, impact_tasks_1):
-    id_string = t1 + ''.join(i1) + t2 + t3 + t4 + t5
+for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
+    id_string = t1 + i1 + t2
     for idx in range(num_evals):
         mean_aligned_interaction_learner_1.append(
             eval_scores["action_aligned_interaction_learner"][id_string][0][idx]["player_0"])
         mean_aligned_interaction_learner_2.append(
-            eval_scores["action_aligned_interaction_learner"][id_string][0][idx]["player_1"] +
-            eval_scores["action_aligned_interaction_learner"][id_string][0][idx]["player_2"] +
-            eval_scores["action_aligned_interaction_learner"][id_string][0][idx]["player_3"] +
-            eval_scores["action_aligned_interaction_learner"][id_string][0][idx]["player_4"])
+            eval_scores["action_aligned_interaction_learner"][id_string][0][idx]["player_1"])
         mean_aligned_interaction_learner_team.append(
             eval_scores["action_aligned_interaction_learner"][id_string][0][idx]["player_0"] +
-            eval_scores["action_aligned_interaction_learner"][id_string][0][idx]["player_1"] +
-            eval_scores["action_aligned_interaction_learner"][id_string][0][idx]["player_2"] +
-            eval_scores["action_aligned_interaction_learner"][id_string][0][idx]["player_3"] +
-            eval_scores["action_aligned_interaction_learner"][id_string][0][idx]["player_4"])
+            eval_scores["action_aligned_interaction_learner"][id_string][0][idx]["player_1"])
 
         mean_non_aligned_interaction_learner_1.append(
             eval_scores["non_aligned_interaction_learner"][id_string][0][idx]["player_0"])
         mean_non_aligned_interaction_learner_2.append(
-            eval_scores["non_aligned_interaction_learner"][id_string][0][idx]["player_1"] +
-            eval_scores["non_aligned_interaction_learner"][id_string][0][idx]["player_2"] +
-            eval_scores["non_aligned_interaction_learner"][id_string][0][idx]["player_3"] +
-            eval_scores["non_aligned_interaction_learner"][id_string][0][idx]["player_4"])
+            eval_scores["non_aligned_interaction_learner"][id_string][0][idx]["player_1"])
         mean_non_aligned_interaction_learner_team.append(
             eval_scores["non_aligned_interaction_learner"][id_string][0][idx]["player_0"] +
-            eval_scores["non_aligned_interaction_learner"][id_string][0][idx]["player_1"] +
-            eval_scores["non_aligned_interaction_learner"][id_string][0][idx]["player_2"] +
-            eval_scores["non_aligned_interaction_learner"][id_string][0][idx]["player_3"] +
-            eval_scores["non_aligned_interaction_learner"][id_string][0][idx]["player_4"])
+            eval_scores["non_aligned_interaction_learner"][id_string][0][idx]["player_1"])
 
         mean_selfish_task_solver_1.append(
             eval_scores["selfish_task_solver"][id_string][0][idx]["player_0"])
         mean_selfish_task_solver_2.append(
-            eval_scores["selfish_task_solver"][id_string][0][idx]["player_1"] +
-            eval_scores["selfish_task_solver"][id_string][0][idx]["player_2"] +
-            eval_scores["selfish_task_solver"][id_string][0][idx]["player_3"] +
-            eval_scores["selfish_task_solver"][id_string][0][idx]["player_4"])
+            eval_scores["selfish_task_solver"][id_string][0][idx]["player_1"])
         mean_selfish_task_solver_team.append(
             eval_scores["selfish_task_solver"][id_string][0][idx]["player_0"] +
-            eval_scores["selfish_task_solver"][id_string][0][idx]["player_1"] +
-            eval_scores["selfish_task_solver"][id_string][0][idx]["player_2"] +
-            eval_scores["selfish_task_solver"][id_string][0][idx]["player_3"] +
-            eval_scores["selfish_task_solver"][id_string][0][idx]["player_4"])
+            eval_scores["selfish_task_solver"][id_string][0][idx]["player_1"])
 
         mean_joint_learner_1.append(
             eval_scores["joint_learner"][id_string][0][idx]["player_0"])
         mean_joint_learner_2.append(
-            eval_scores["joint_learner"][id_string][0][idx]["player_1"] +
-            eval_scores["joint_learner"][id_string][0][idx]["player_2"] +
-            eval_scores["joint_learner"][id_string][0][idx]["player_3"] +
-            eval_scores["joint_learner"][id_string][0][idx]["player_4"])
+            eval_scores["joint_learner"][id_string][0][idx]["player_1"])
         mean_joint_learner_team.append(
             eval_scores["joint_learner"][id_string][0][idx]["player_0"] +
-            eval_scores["joint_learner"][id_string][0][idx]["player_1"] +
-            eval_scores["joint_learner"][id_string][0][idx]["player_2"] +
-            eval_scores["joint_learner"][id_string][0][idx]["player_3"] +
-            eval_scores["joint_learner"][id_string][0][idx]["player_4"])
+            eval_scores["joint_learner"][id_string][0][idx]["player_1"])
 
 mean_aail_team = np.asarray(mean_aligned_interaction_learner_team).mean()
 mean_aail_1 = np.asarray(mean_aligned_interaction_learner_1).mean()

@@ -15,7 +15,7 @@ plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
 plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)
 
-with open("stats/test_aligned_scenarios_after_submit5.stats", 'rb') as outp:  # Overwrites any existing file.
+with open("stats/test_aligned_scenarios_after_submit9.stats", 'rb') as outp:  # Overwrites any existing file.
     obj = pickle.load(outp)
 
 mean_aligned_interaction_learner_team = []
@@ -36,14 +36,15 @@ std_non_aligned_interaction_learner = []
 std_selfish_task_solver = []
 std_joint_learner = []
 
-aligned_task_1 = ["ta"]
-impact_task_1 = ["ie3"]
-aligned_task_2 = ["te3"]
+aligned_task_1 = ["tc"]
+impact_task_1 = ["ic4"]
+aligned_task_2 = ["tc4"]
 
 algorithms = ["action_aligned_interaction_learner", "non_aligned_interaction_learner",
               "selfish_task_solver", "joint_learner"]
 
 num_evals = 200
+root_eval = np.sqrt(num_evals)
 
 eval_scores = obj["eval_scores"]
 
@@ -86,33 +87,33 @@ mean_aail_team = np.asarray(mean_aligned_interaction_learner_team).mean()
 mean_aail_1 = np.asarray(mean_aligned_interaction_learner_1).mean()
 mean_aail_2 = np.asarray(mean_aligned_interaction_learner_2).mean()
 
-std_aail_team = np.asarray(mean_aligned_interaction_learner_team).std()
-std_aail_1 = np.asarray(mean_aligned_interaction_learner_1).std()
-std_aail_2 = np.asarray(mean_aligned_interaction_learner_2).std()
+std_aail_team = np.asarray(mean_aligned_interaction_learner_team).std(ddof=1) / root_eval
+std_aail_1 = np.asarray(mean_aligned_interaction_learner_1).std(ddof=1) / root_eval
+std_aail_2 = np.asarray(mean_aligned_interaction_learner_2).std(ddof=1) / root_eval
 
 mean_nail_team = np.asarray(mean_non_aligned_interaction_learner_team).mean()
 mean_nail_1 = np.asarray(mean_non_aligned_interaction_learner_1).mean()
 mean_nail_2 = np.asarray(mean_non_aligned_interaction_learner_2).mean()
 
-std_nail_team = np.asarray(mean_non_aligned_interaction_learner_team).std()
-std_nail_1 = np.asarray(mean_non_aligned_interaction_learner_1).std()
-std_nail_2 = np.asarray(mean_non_aligned_interaction_learner_2).std()
+std_nail_team = np.asarray(mean_non_aligned_interaction_learner_team).std(ddof=1) / root_eval
+std_nail_1 = np.asarray(mean_non_aligned_interaction_learner_1).std(ddof=1) / root_eval
+std_nail_2 = np.asarray(mean_non_aligned_interaction_learner_2).std(ddof=1) / root_eval
 
 mean_jl_team = np.asarray(mean_joint_learner_team).mean()
 mean_jl_1 = np.asarray(mean_joint_learner_1).mean()
 mean_jl_2 = np.asarray(mean_joint_learner_2).mean()
 
-std_jl_team = np.asarray(mean_joint_learner_team).std()
-std_jl_1 = np.asarray(mean_joint_learner_1).std()
-std_jl_2 = np.asarray(mean_joint_learner_2).std()
+std_jl_team = np.asarray(mean_joint_learner_team).std(ddof=1) / root_eval
+std_jl_1 = np.asarray(mean_joint_learner_1).std(ddof=1) / root_eval
+std_jl_2 = np.asarray(mean_joint_learner_2).std(ddof=1) / root_eval
 
 mean_sl_team = np.asarray(mean_selfish_task_solver_team).mean()
 mean_sl_1 = np.asarray(mean_selfish_task_solver_1).mean()
 mean_sl_2 = np.asarray(mean_selfish_task_solver_2).mean()
 
-std_sl_team = np.asarray(mean_selfish_task_solver_team).std()
-std_sl_1 = np.asarray(mean_selfish_task_solver_1).std()
-std_sl_2 = np.asarray(mean_selfish_task_solver_2).std()
+std_sl_team = np.asarray(mean_selfish_task_solver_team).std(ddof=1) / root_eval
+std_sl_1 = np.asarray(mean_selfish_task_solver_1).std(ddof=1) / root_eval
+std_sl_2 = np.asarray(mean_selfish_task_solver_2).std(ddof=1) / root_eval
 
 labels = ["AAIL", "NAIL", "SL", "JL"]
 
@@ -120,7 +121,7 @@ means_team = [mean_aail_team, mean_nail_team, mean_jl_team, mean_sl_team]
 means_1 = [mean_aail_1, mean_nail_1, mean_jl_1, mean_sl_1]
 means_2 = [mean_aail_2, mean_nail_2, mean_jl_2, mean_sl_2]
 
-base = min(means_team + means_1 + means_2)
+base = min(means_team + means_1 + means_2) - 10
 
 means_team = np.asarray([abs(mean_aail_team - base), abs(mean_nail_team - base), abs(mean_jl_team - base), abs(mean_sl_team - base)])
 means_1 = np.asarray([abs(mean_aail_1 - base), abs(mean_nail_1 - base), abs(mean_jl_1 - base), abs(mean_sl_1 - base)])
@@ -143,9 +144,9 @@ rects1 = ax.bar(x - width, means_team, width, label='Team', bottom=base)
 rects2 = ax.bar(x, means_1, width, label='Agent 1', bottom=base)
 rects3 = ax.bar(x + width, means_2, width, label='Agent 2', bottom=base)
 
-plt.errorbar(x - width, means_team + base, yerr=std_team, fmt="o", color="k")
-plt.errorbar(x, means_1 + base, yerr=std_1, fmt="o", color="k")
-plt.errorbar(x + width, means_2 + base, yerr=std_2, fmt="o", color="k")
+plt.errorbar(x - width, means_team + base, yerr=std_team, fmt="none", color="k")
+plt.errorbar(x, means_1 + base, yerr=std_1, fmt="none", color="k")
+plt.errorbar(x + width, means_2 + base, yerr=std_2, fmt="none", color="k")
 
 # Add some text for labels, title and custom x-axis tick labels, etc.
 ax.set_ylabel('Rewards', fontsize=30, fontname=fontname)

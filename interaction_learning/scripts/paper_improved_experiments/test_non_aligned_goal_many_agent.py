@@ -32,9 +32,9 @@ eval_scores = {alg: {} for alg in algorithms}
 
 # 0 is do nothing 1 is move right 2 is down 3 is left 4 is up
 
-num_eval = 100
+num_eval = 200
 
-agent_position_generator = AgentPositionGenerator(num_eval * 10, num_agents=5, x_min=0.4, x_max=0.6, y_min=0.4, y_max=0.6)
+agent_position_generator = AgentPositionGenerator(num_eval * 10, num_agents=5)
 agent_reward = ["x"]
 max_steps = 1000
 ghost_agents = 0
@@ -44,37 +44,29 @@ num_agents = 5
 env = parallel_env(num_agents=num_agents, agent_position_generator=agent_position_generator, agent_reward=agent_reward,
                    max_steps=max_steps, ghost_agents=ghost_agents, render=render)
 
-obs_dim = env.observation_spaces["player_0"].shape[0]
-n_actions = env.action_spaces["player_0"].n
-task_alpha = 0.05
-impact_alpha = 0.05
-batch_size = 32
-gamma = 0.5
-target_update_interval = 1000
-memory_size = 50000
-
 num_epochs = 200
 
-with open("impact_learner/all_ego_task_5_agents_no_ghosts.agent", "rb") as input_file:
+with open("../paper_experiments/impact_learner/all_ego_task_5_agents_no_ghosts.agent", "rb") as input_file:
     ego_agent = pickle.load(input_file)
 
-with open("impact_learner/all_ego_and_impact_task_5_agents.agent", "rb") as input_file:
+with open("../paper_experiments/impact_learner/all_ego_and_impact_task_5_agents.agent", "rb") as input_file:
     interaction_agent = pickle.load(input_file)
 
-with open("impact_learner/joint_learner_determined_goals_5_agents.agent", "rb") as input_file:
+with open("../paper_experiments/impact_learner/joint_learner_determined_goals_5_agents.agent", "rb") as input_file:
     joint_agent = pickle.load(input_file)
 
-with open("impact_learner/all_ego_task_5_agents_no_ghosts.agent", "rb") as input_file:
+with open("../paper_experiments/impact_learner/all_ego_task_5_agents_no_ghosts.agent", "rb") as input_file:
     other_agent_1 = pickle.load(input_file)
 
-with open("impact_learner/all_ego_task_5_agents_no_ghosts.agent", "rb") as input_file:
+with open("../paper_experiments/impact_learner/all_ego_task_5_agents_no_ghosts.agent", "rb") as input_file:
     other_agent_2 = pickle.load(input_file)
 
-with open("impact_learner/all_ego_task_5_agents_no_ghosts.agent", "rb") as input_file:
+with open("../paper_experiments/impact_learner/all_ego_task_5_agents_no_ghosts.agent", "rb") as input_file:
     other_agent_3 = pickle.load(input_file)
 
-with open("impact_learner/all_ego_task_5_agents_no_ghosts.agent", "rb") as input_file:
+with open("../paper_experiments/impact_learner/all_ego_task_5_agents_no_ghosts.agent", "rb") as input_file:
     other_agent_4 = pickle.load(input_file)
+
 
 interaction_agent.switch_mode(ParticleInteractionAgent.INFERENCE)
 ego_agent.switch_mode(ParticleInteractionAgent.INFERENCE)
@@ -193,5 +185,5 @@ for t1, t2, t3, t4, t5, i1 in zip(task_1, task_2, task_3, task_4, task_5, impact
 ########################################################################################################################
 
 stats = {"eval_scores": eval_scores}
-with open("stats/test_aligned_scenarios_many_agents.stats", 'wb') as outp:  # Overwrites any existing file.
+with open("stats/test_non_aligned_scenarios_many_agents.stats", 'wb') as outp:  # Overwrites any existing file.
     pickle.dump(stats, outp, pickle.HIGHEST_PROTOCOL)

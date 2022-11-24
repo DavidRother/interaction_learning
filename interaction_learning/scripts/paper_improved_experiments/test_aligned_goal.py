@@ -13,9 +13,13 @@ import pickle
 make_deterministic(1)
 device = torch.device("cpu")
 
-aligned_task_1 = ["ta"]
-impact_task_1 = ["ie3"]
-aligned_task_2 = ["te3"]
+# aligned_task_1 = ["ta", "te", "tb", "tc", "td"]
+# impact_task_1 = ["ie0", "ia1", "id2", "ic4", "ib3"]
+# aligned_task_2 = ["te0", "ta1", "td2", "tc4", "tb3"]
+
+aligned_task_1 = ["tc"]
+impact_task_1 = ["ic4"]
+aligned_task_2 = ["tc4"]
 
 algorithms = ["action_aligned_interaction_learner", "non_aligned_interaction_learner",
               "selfish_task_solver", "joint_learner"]
@@ -25,8 +29,9 @@ eval_scores = {alg: {} for alg in algorithms}
 # 0 is do nothing 1 is move right 2 is down 3 is left 4 is up
 
 num_eval = 200
+stats_location = "stats/test_aligned_scenarios_after_submit9.stats"
 
-pos_constraints = [[0.8, 1.0, 0.0, 1.0], [0.0, 1.0, 0.8, 1.0]]
+pos_constraints = [[0.0, 1.0, 0.0, 1.0], [0.0, 1.0, 0.0, 1.0]]
 agent_position_generator = AgentPositionGenerator2(num_eval * 10, pos_constraints=pos_constraints)
 agent_reward = ["x"]
 max_steps = 1000
@@ -36,17 +41,6 @@ num_agents = 2
 
 env = parallel_env(num_agents=num_agents, agent_position_generator=agent_position_generator, agent_reward=agent_reward,
                    max_steps=max_steps, ghost_agents=ghost_agents, render=render)
-
-obs_dim = env.observation_spaces["player_0"].shape[0]
-n_actions = env.action_spaces["player_0"].n
-task_alpha = 0.05
-impact_alpha = 0.05
-batch_size = 32
-gamma = 0.5
-target_update_interval = 1000
-memory_size = 50000
-
-num_epochs = 200
 
 with open("../paper_experiments/impact_learner/all_ego_and_impact_task.agent", "rb") as input_file:
     interaction_agent = pickle.load(input_file)
@@ -159,5 +153,5 @@ for t1, i1, t2 in zip(aligned_task_1, impact_task_1, aligned_task_2):
 ########################################################################################################################
 
 stats = {"eval_scores": eval_scores}
-with open("stats/test_aligned_scenarios_after_submit5.stats", 'wb') as outp:  # Overwrites any existing file.
+with open(stats_location, 'wb') as outp:  # Overwrites any existing file.
     pickle.dump(stats, outp, pickle.HIGHEST_PROTOCOL)

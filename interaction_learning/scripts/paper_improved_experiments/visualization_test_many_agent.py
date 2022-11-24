@@ -16,7 +16,7 @@ plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
 plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)
 
-with open("stats/test_aligned_scenarios_many_agents.stats", 'rb') as outp:  # Overwrites any existing file.
+with open("stats/test_non_aligned_scenarios_many_agents.stats", 'rb') as outp:  # Overwrites any existing file.
     obj = pickle.load(outp)
 
 mean_aligned_interaction_learner_team = []
@@ -37,11 +37,11 @@ std_non_aligned_interaction_learner = []
 std_selfish_task_solver = []
 std_joint_learner = []
 
-task_1 = ["ta2", "te1", "tb2", "tc4", "td3"]
-task_2 = ["ta0", "ta1", "ta2", "ta3", "ta4"]
-task_3 = ["tb2", "tb3", "tb4", "tb0", "tb1"]
-task_4 = ["tc4", "tc0", "tc1", "tc2", "tc3"]
-task_5 = ["te1", "td2", "te3", "td4", "te0"]
+task_1 = ["ta2"]
+task_2 = ["ta0"]
+task_3 = ["tb2"]
+task_4 = ["tc4"]
+task_5 = ["te1"]
 
 impact_tasks_1 = [[t1.replace("t", "i"), t2.replace("t", "i"),
                    t3.replace("t", "i"), t4.replace("t", "i")]
@@ -50,7 +50,7 @@ impact_tasks_1 = [[t1.replace("t", "i"), t2.replace("t", "i"),
 algorithms = ["action_aligned_interaction_learner", "non_aligned_interaction_learner",
               "selfish_task_solver", "joint_learner"]
 
-num_evals = 100
+num_evals = 200
 root_eval = np.sqrt(num_evals)
 
 eval_scores = obj["eval_scores"]
@@ -152,7 +152,7 @@ means_team = [mean_aail_team, mean_nail_team, mean_jl_team, mean_sl_team]
 means_1 = [mean_aail_1, mean_nail_1, mean_jl_1, mean_sl_1]
 means_2 = [mean_aail_2, mean_nail_2, mean_jl_2, mean_sl_2]
 
-base = min(means_team + means_1 + means_2) - 50
+base = min(means_team + means_1 + means_2)
 
 means_team = np.asarray([abs(mean_aail_team - base), abs(mean_nail_team - base), abs(mean_jl_team - base), abs(mean_sl_team - base)])
 means_1 = np.asarray([abs(mean_aail_1 - base), abs(mean_nail_1 - base), abs(mean_jl_1 - base), abs(mean_sl_1 - base)])
@@ -191,7 +191,7 @@ ax.legend(fontsize=23, loc='upper center', ncol=3, fancybox=True, shadow=True, m
 # ax.bar_label(rects3, padding=3)
 
 fig.tight_layout()
-plt.savefig("plots/test_non_aligned_scenarios.svg")
+plt.savefig("plots/test_many_agent_scenarios.svg")
 plt.show()
 
 print("done")
