@@ -16,7 +16,7 @@ plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
 plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)
 
-with open("stats/test_non_aligned_scenarios_many_agents.stats", 'rb') as outp:  # Overwrites any existing file.
+with open("../paper_experiments/stats/test_aligned_scenarios_many_agents.stats", 'rb') as outp:  # Overwrites any existing file.
     obj = pickle.load(outp)
 
 mean_aligned_interaction_learner_team = []
@@ -37,6 +37,12 @@ std_non_aligned_interaction_learner = []
 std_selfish_task_solver = []
 std_joint_learner = []
 
+# task_1 = ["ta2", "te1", "tb2", "tc4", "td3"]
+# task_2 = ["ta0", "ta1", "ta2", "ta3", "ta4"]
+# task_3 = ["tb2", "tb3", "tb4", "tb0", "tb1"]
+# task_4 = ["tc4", "tc0", "tc1", "tc2", "tc3"]
+# task_5 = ["te1", "td2", "te3", "td4", "te0"]
+
 task_1 = ["ta2"]
 task_2 = ["ta0"]
 task_3 = ["tb2"]
@@ -50,7 +56,7 @@ impact_tasks_1 = [[t1.replace("t", "i"), t2.replace("t", "i"),
 algorithms = ["action_aligned_interaction_learner", "non_aligned_interaction_learner",
               "selfish_task_solver", "joint_learner"]
 
-num_evals = 200
+num_evals = 100
 root_eval = np.sqrt(num_evals)
 
 eval_scores = obj["eval_scores"]
@@ -146,21 +152,21 @@ std_sl_team = np.asarray(mean_selfish_task_solver_team).std(ddof=1) / root_eval
 std_sl_1 = np.asarray(mean_selfish_task_solver_1).std(ddof=1) / root_eval
 std_sl_2 = np.asarray(mean_selfish_task_solver_2).std(ddof=1) / root_eval
 
-labels = ["AAIL", "NAIL", "SL", "JL"]
+labels = ["AAIL", "SL", "JL"]
 
 means_team = [mean_aail_team, mean_nail_team, mean_jl_team, mean_sl_team]
 means_1 = [mean_aail_1, mean_nail_1, mean_jl_1, mean_sl_1]
 means_2 = [mean_aail_2, mean_nail_2, mean_jl_2, mean_sl_2]
 
-base = min(means_team + means_1 + means_2)
+base = min(means_team + means_1 + means_2) - 100
 
-means_team = np.asarray([abs(mean_aail_team - base), abs(mean_nail_team - base), abs(mean_jl_team - base), abs(mean_sl_team - base)])
-means_1 = np.asarray([abs(mean_aail_1 - base), abs(mean_nail_1 - base), abs(mean_jl_1 - base), abs(mean_sl_1 - base)])
-means_2 = np.asarray([abs(mean_aail_2 - base), abs(mean_nail_2 - base), abs(mean_jl_2 - base), abs(mean_sl_2 - base)])
+means_team = np.asarray([abs(mean_aail_team - base), abs(mean_jl_team - base), abs(mean_sl_team - base)])
+means_1 = np.asarray([abs(mean_aail_1 - base), abs(mean_jl_1 - base), abs(mean_sl_1 - base)])
+means_2 = np.asarray([abs(mean_aail_2 - base), abs(mean_jl_2 - base), abs(mean_sl_2 - base)])
 
-std_team = [std_aail_team, std_nail_team, std_jl_team, std_sl_team]
-std_1 = [std_aail_1, std_nail_1, std_jl_1, std_sl_1]
-std_2 = [std_aail_2, std_nail_2, std_jl_2, std_sl_2]
+std_team = [std_aail_team, std_jl_team, std_sl_team]
+std_1 = [std_aail_1, std_jl_1, std_sl_1]
+std_2 = [std_aail_2, std_jl_2, std_sl_2]
 
 x = np.arange(len(labels))  # the label locations
 width = 0.25  # the width of the bars
@@ -173,7 +179,7 @@ plt.style.use("seaborn-whitegrid")
 fig, ax = plt.subplots()
 rects1 = ax.bar(x - width, means_team, width, label='Team', bottom=base)
 rects2 = ax.bar(x, means_1, width, label='Agent 1', bottom=base)
-rects3 = ax.bar(x + width, means_2, width, label='Agent 2', bottom=base)
+rects3 = ax.bar(x + width, means_2, width, label='Other Agents', bottom=base)
 
 plt.errorbar(x - width, means_team + base, yerr=std_team, fmt="none", color="k")
 plt.errorbar(x, means_1 + base, yerr=std_1, fmt="none", color="k")
