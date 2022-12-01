@@ -14,22 +14,26 @@ make_deterministic(1)
 
 x_tasks = ["a", "b", "c", "d", "e"]
 y_tasks = ["0", "1", "2", "3", "4"]
-tasks = ["t" + x + y for x in x_tasks for y in y_tasks] + ["t" + x for x in x_tasks] + ["t" + y for y in y_tasks]
+# tasks = ["t" + x + y for x in x_tasks for y in y_tasks] + ["t" + x for x in x_tasks] + ["t" + y for y in y_tasks]
+
+task_1 = ["ta2"]
+task_2 = ["ta0"]
+task_3 = ["tb2"]
+task_4 = ["tc4"]
+task_5 = ["te1"]
+
+tasks = ["ta2", "ta0", "tb2", "tc4", "te1"]
 device = torch.device("cpu")
 
 # 0 is do nothing 1 is move right 2 is down 3 is left 4 is up
 
 
-agent_position_generator = lambda: [np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)]),
-                                    np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)]),
-                                    np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)]),
-                                    np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)]),
-                                    np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)])]
+agent_position_generator = lambda: [np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)])]
 agent_reward = ["x"]
 max_steps = 1000
-ghost_agents = 0
+ghost_agents = 4
 render = False
-num_agents = 5
+num_agents = 1
 
 env = parallel_env(num_agents=num_agents, agent_position_generator=agent_position_generator, agent_reward=agent_reward,
                    max_steps=max_steps, ghost_agents=ghost_agents, render=render)
@@ -45,7 +49,7 @@ target_update_interval = 1000
 memory_size = 50000
 action_alignment = False
 
-num_epochs = 200
+num_epochs = 1000
 
 interaction_agent = ParticleInteractionAgent(obs_dim, obs_dim_impact, n_actions, task_alpha, impact_alpha,
                                              action_alignment, batch_size, gamma, target_update_interval,
@@ -58,14 +62,14 @@ eval_scores = {}
 for task in tasks:
 
     env = parallel_env(num_agents=num_agents, agent_position_generator=agent_position_generator,
-                       agent_reward=[task, ""],
+                       agent_reward=[task],
                        max_steps=max_steps, ghost_agents=ghost_agents, render=render)
 
     interaction_agent.add_task(task)
     interaction_agent.switch_active_tasks([task])
 
     episode_reward = 0
-    num_eval_runs = 100
+    num_eval_runs = 10
 
     action_distribution = {n: 0 for n in range(env.action_spaces["player_0"].n)}
     action_dists = []
@@ -75,7 +79,7 @@ for task in tasks:
 
     action_bag = []
 
-    evaluation_scores = [evaluate(env, 10, [interaction_agent, dummy_agent, dummy_agent, dummy_agent, dummy_agent])]
+    evaluation_scores = [evaluate(env, 10, [interaction_agent])]
 
     for epoch in tqdm.tqdm(range(num_epochs)):
         state = env.reset()
@@ -109,7 +113,7 @@ for task in tasks:
         action_bag = []
         episode_rewards.append(episode_reward)
         if epoch % 10 == 0:
-            evaluation_scores.append(evaluate(env, 10, [interaction_agent, dummy_agent, dummy_agent, dummy_agent, dummy_agent]))
+            evaluation_scores.append(evaluate(env, 10, [interaction_agent]))
             # torch.save(onlineQNetwork.state_dict(), f'agent/sql{epoch}policy_y0dimpact')
             # print('Epoch {}\tMoving average score: {:.2f}\t'.format(epoch, episode_reward))
     print(episode_rewards)
@@ -117,6 +121,6 @@ for task in tasks:
     eval_scores[task] = evaluation_scores
 
 stats = {"ep_rews": ep_rews, "eval_scores": eval_scores}
-with open("stats/training_impact_learners_5_agents_no_ghosts.stats", 'wb') as outp:  # Overwrites any existing file.
+with open("stats/selected_tasks_5_agents.stats", 'wb') as outp:  # Overwrites any existing file.
     pickle.dump(stats, outp, pickle.HIGHEST_PROTOCOL)
-interaction_agent.save_agent("impact_learner/all_ego_task_5_agents_no_ghosts.agent")
+interaction_agent.save_agent("impact_learner/selected_tasks_5_agents.agent")

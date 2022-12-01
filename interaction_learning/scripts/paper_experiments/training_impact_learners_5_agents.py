@@ -24,9 +24,9 @@ agent_position_generator = lambda: [np.asarray([np.random.uniform(0, 1), np.rand
                                     np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)])]
 agent_reward = ["x"]
 max_steps = 1000
-ghost_agents = 3
+ghost_agents = 4
 render = False
-num_agents = 2
+num_agents = 1
 
 env = parallel_env(num_agents=num_agents, agent_position_generator=agent_position_generator, agent_reward=agent_reward,
                    max_steps=max_steps, ghost_agents=ghost_agents, render=render)
@@ -79,7 +79,7 @@ for task in tasks:
         episode_reward = 0
         for time_steps in range(max_steps):
             action = interaction_agent.select_action(state["player_0"])
-            actions = {"player_0": action, "player_1": 0}
+            actions = {"player_0": action}
             next_state, reward, done, _ = env.step(actions)
             episode_reward += reward["player_0"]
 
@@ -114,6 +114,6 @@ for task in tasks:
     eval_scores[task] = evaluation_scores
 
 stats = {"ep_rews": ep_rews, "eval_scores": eval_scores}
-with open("stats/training_impact_learners_5_agents_second_run.stats", 'wb') as outp:  # Overwrites any existing file.
+with open("stats/training_impact_learners_5_agents_third_run.stats", 'wb') as outp:  # Overwrites any existing file.
     pickle.dump(stats, outp, pickle.HIGHEST_PROTOCOL)
-interaction_agent.save_agent("impact_learner/all_ego_task_5_agents_second_run.agent")
+interaction_agent.save_agent("impact_learner/all_ego_task_5_agents_third_run.agent")

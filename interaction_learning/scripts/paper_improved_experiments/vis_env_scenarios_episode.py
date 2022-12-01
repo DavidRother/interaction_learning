@@ -31,7 +31,7 @@ agent_position_generator = lambda: [np.asarray([np.random.uniform(0, 1), np.rand
                                     np.asarray([np.random.uniform(0, 1), np.random.uniform(0, 1)])]
 
 
-agent_reward = [f"ta1", "tb1", "tc1", "td1", "te1"]
+agent_reward = [f"ta2", "tb2", "tc4", "td3", "te1"]
 max_steps = 1000
 ghost_agents = 0
 render = True
@@ -61,6 +61,7 @@ with open(f"../paper_experiments/impact_learner/joint_learner_determined_goals_5
     joint_agent = pickle.load(input_file)
 
 interaction_agent.switch_mode(ParticleInteractionAgent.INFERENCE)
+interaction_agent.action_alignment = True
 active_tasks = [agent_reward[0], agent_reward[1].replace("t", "i")]
 interaction_agent.switch_active_tasks(active_tasks)
 other_agent.switch_mode(ParticleInteractionAgent.INFERENCE)
