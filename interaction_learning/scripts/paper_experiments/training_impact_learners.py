@@ -1,6 +1,6 @@
 from interaction_learning.algorithms.interaction_framework.particle_interaction_agent import ParticleInteractionAgent
 from interaction_learning.core.evaluation import evaluate, DummyAgent
-from partigames.environment.zoo_env import parallel_env
+from partigames.environment.partigame import parallel_env
 from interaction_learning.core.util import make_deterministic
 import matplotlib.pyplot as plt
 from time import sleep
@@ -83,7 +83,7 @@ for task in tasks:
         for time_steps in range(max_steps):
             action = interaction_agent.select_action(state["player_0"])
             actions = {"player_0": action, "player_1": 0}
-            next_state, reward, done, info = env.step(actions)
+            next_state, reward, done, truncation, info = env.step(actions)
             episode_reward += reward["player_0"]
 
             interaction_agent.add_transition(state["player_0"], next_state["player_0"], action,
@@ -122,6 +122,6 @@ for task in tasks:
 
 
 stats = {"ep_rews": ep_rews, "eval_scores": eval_scores, "ep_lengths": ep_length_stats}
-with open("stats/training_impact_learners.stats", 'wb') as outp:  # Overwrites any existing file.
+with open("stats/training_impact_learners2.stats", 'wb') as outp:  # Overwrites any existing file.
     pickle.dump(stats, outp, pickle.HIGHEST_PROTOCOL)
-interaction_agent.save_agent("impact_learner/all_ego_task.agent")
+interaction_agent.save_agent("impact_learner/all_ego_task2.agent")

@@ -15,7 +15,7 @@ def evaluate(env, num_episodes, agents, kwargs_agents=None, render=False):
         done = {f"player_{idx}": False for idx in range(len(agents))}
         while not all(done.values()):
             actions = {f"player_{idx}": agent.select_action(state[f"player_{idx}"], **kwargs) for idx, (agent, kwargs) in enumerate(zip(agents, kwargs_agents))}
-            next_state, reward, done, _ = env.step(actions)
+            next_state, reward, done, truncation, _ = env.step(actions)
             for agent, rew in reward.items():
                 episode_reward[agent] += rew
 
