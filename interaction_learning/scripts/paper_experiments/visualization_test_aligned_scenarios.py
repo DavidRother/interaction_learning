@@ -115,7 +115,7 @@ std_sl_team = np.asarray(mean_selfish_task_solver_team).std(ddof=1) / root_eval
 std_sl_1 = np.asarray(mean_selfish_task_solver_1).std(ddof=1) / root_eval
 std_sl_2 = np.asarray(mean_selfish_task_solver_2).std(ddof=1) / root_eval
 
-labels = ["AAIL", "NAIL", "SL", "JL"]
+labels = ["AAIL", "SL", "JL"]
 
 means_team = [mean_aail_team, mean_nail_team, mean_jl_team, mean_sl_team]
 means_1 = [mean_aail_1, mean_nail_1, mean_jl_1, mean_sl_1]
@@ -123,13 +123,13 @@ means_2 = [mean_aail_2, mean_nail_2, mean_jl_2, mean_sl_2]
 
 base = min(means_team + means_1 + means_2) - 50
 
-means_team = np.asarray([abs(mean_aail_team - base), abs(mean_nail_team - base), abs(mean_jl_team - base), abs(mean_sl_team - base)])
-means_1 = np.asarray([abs(mean_aail_1 - base), abs(mean_nail_1 - base), abs(mean_jl_1 - base), abs(mean_sl_1 - base)])
-means_2 = np.asarray([abs(mean_aail_2 - base), abs(mean_nail_2 - base), abs(mean_jl_2 - base), abs(mean_sl_2 - base)])
+means_team = np.asarray([abs(mean_aail_team - base), abs(mean_jl_team - base), abs(mean_sl_team - base)])
+means_1 = np.asarray([abs(mean_aail_1 - base), abs(mean_jl_1 - base), abs(mean_sl_1 - base)])
+means_2 = np.asarray([abs(mean_aail_2 - base), abs(mean_jl_2 - base), abs(mean_sl_2 - base)])
 
-std_team = [std_aail_team, std_nail_team, std_jl_team, std_sl_team]
-std_1 = [std_aail_1, std_nail_1, std_jl_1, std_sl_1]
-std_2 = [std_aail_2, std_nail_2, std_jl_2, std_sl_2]
+std_team = [std_aail_team, std_jl_team, std_sl_team]
+std_1 = [std_aail_1, std_jl_1, std_sl_1]
+std_2 = [std_aail_2, std_jl_2, std_sl_2]
 
 x = np.arange(len(labels))  # the label locations
 width = 0.25  # the width of the bars
@@ -144,9 +144,9 @@ rects1 = ax.bar(x - width, means_team, width, label='Team', bottom=base)
 rects2 = ax.bar(x, means_1, width, label='Agent 1', bottom=base)
 rects3 = ax.bar(x + width, means_2, width, label='Agent 2', bottom=base)
 
-plt.errorbar(x - width, means_team + base, yerr=std_team, fmt="o", color="k")
-plt.errorbar(x, means_1 + base, yerr=std_1, fmt="o", color="k")
-plt.errorbar(x + width, means_2 + base, yerr=std_2, fmt="o", color="k")
+plt.errorbar(x - width, means_team + base, yerr=std_team, fmt="none", color="k")
+plt.errorbar(x, means_1 + base, yerr=std_1, fmt="none", color="k")
+plt.errorbar(x + width, means_2 + base, yerr=std_2, fmt="none", color="k")
 
 # Add some text for labels, title and custom x-axis tick labels, etc.
 ax.set_ylabel('Rewards', fontsize=30, fontname=fontname)

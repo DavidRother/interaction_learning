@@ -142,9 +142,9 @@ rects1 = ax.bar(x - width, means_team, width, label='Team', bottom=base)
 rects2 = ax.bar(x, means_1, width, label='Agent 1', bottom=base)
 rects3 = ax.bar(x + width, means_2, width, label='Agent 2', bottom=base)
 
-plt.errorbar(x - width, means_team + base, yerr=std_team, fmt="o", color="k")
-plt.errorbar(x, means_1 + base, yerr=std_1, fmt="o", color="k")
-plt.errorbar(x + width, means_2 + base, yerr=std_2, fmt="o", color="k")
+plt.errorbar(x - width, means_team + base, yerr=std_team, fmt="none", color="k")
+plt.errorbar(x, means_1 + base, yerr=std_1, fmt="none", color="k")
+plt.errorbar(x + width, means_2 + base, yerr=std_2, fmt="none", color="k")
 
 # Add some text for labels, title and custom x-axis tick labels, etc.
 ax.set_ylabel('Rewards', fontsize=30, fontname=fontname)
