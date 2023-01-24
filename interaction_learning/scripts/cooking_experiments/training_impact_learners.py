@@ -2,12 +2,9 @@ from interaction_learning.algorithms.interaction_framework.particle_interaction_
 from interaction_learning.core.evaluation import evaluate, DummyAgent
 from gym_cooking.environment.cooking_env import parallel_env
 from interaction_learning.core.util import make_deterministic
-import matplotlib.pyplot as plt
 from time import sleep
-import numpy as np
 import torch
 import tqdm
-import pickle
 
 
 make_deterministic(1)

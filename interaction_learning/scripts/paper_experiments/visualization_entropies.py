@@ -1,6 +1,5 @@
 from partigames.environment.zoo_env import parallel_env
-from interaction_learning.core.util import make_deterministic, AgentPositionGenerator
-from torch.distributions import Categorical
+from interaction_learning.core.util import  AgentPositionGenerator
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
