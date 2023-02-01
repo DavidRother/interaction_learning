@@ -17,7 +17,7 @@ def collect_experience(env, buffer, agents, steps):
             for idx, agent in enumerate(agents):
                 agent_obs = torch.unsqueeze(torch.Tensor(obs[f"player_{idx}"]), 0)
                 logits[f"player_{idx}"] = agents[agent](agent_obs).squeeze(1)
-                logits_numpy[f"player_{idx}"] = agents[agent](agent_obs).squeeze(1).detach().cpu().numpy()
+                logits_numpy[f"player_{idx}"] = logits[f"player_{idx}"].detach().cpu().numpy()
                 actions[f"player_{idx}"] = Categorical(logits=logits[f"player_{idx}"]).sample().item()
             next_obs, rewards, done, info = env.step(actions)
             for player in agents:
